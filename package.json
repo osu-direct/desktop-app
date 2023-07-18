@@ -1,14 +1,21 @@
 {
-  "name": "electron-quick-start-typescript",
-  "version": "1.0.0",
-  "description": "A minimal Electron application written with Typescript",
+  "name": "osudirect-desktop",
+  "version": "0.0.1",
+  "description": "Desktop app for osu.direct",
+  "main": "dist/main.js",
+  "type": "commonjs",
   "scripts": {
-    "build": "tsc",
+    "start": "tsx start.ts",
+    "compile": "tsx compile.ts",
+    "linux:build": "rm -rf dist/ && tsc",
+    "linux:start": "npm run linux:build && electron ./dist/main.js",
+    "linux:compile": "npm run linux:build && electron-builder",
+    "win:build": "rmdir /s /q dist > nul && tsc",
+    "win:start": "npm run win:build && electron ./dist/main.js",
+    "win:compile": "npm run win:build && electron-builder",
     "watch": "tsc -w",
-    "lint": "eslint -c .eslintrc --ext .ts ./src",
-    "start": "npm run build && electron ./dist/main.js"
+    "lint": "eslint -c .eslintrc --ext .ts ./src"
   },
-  "repository": "https://github.com/electron/electron-quick-start-typescript",
   "keywords": [
     "Electron",
     "quick",
@@ -26,5 +33,7 @@
     "eslint": "^7.32.0",
     "typescript": "^4.8.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "custom-electron-titlebar": "^4.2.3"
+  }
 }
