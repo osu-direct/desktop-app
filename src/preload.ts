@@ -31,4 +31,17 @@ window.addEventListener("DOMContentLoaded", () => {
     if (navItem) objectsToRemove.push(navItem);
   }
   objectsToRemove.forEach(object => object.remove());
+
+  const settingsItem = document.createElement("div");
+  settingsItem.classList.add("nav-item");
+  settingsItem.id = "nav-settings";
+  const settingsItemText = document.createElement("a");
+  settingsItemText.href = "/settings";
+  settingsItemText.innerHTML = "Settings";
+  settingsItem.appendChild(settingsItemText);
+
+  //document.getElementsByClassName("nav-left")[0].appendChild(settingsItem);
+  navHeader[0].appendChild(settingsItem);
+
+
 });
