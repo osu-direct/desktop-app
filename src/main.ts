@@ -17,7 +17,6 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
-      sandbox: false,
     },
   });
 
@@ -39,7 +38,6 @@ function createWindow() {
         webPreferences: {
           preload: path.join(__dirname, "settings_preload.js"),
           nodeIntegration: true,
-          sandbox: false,
         },
       });
       settingsWindow.show();
