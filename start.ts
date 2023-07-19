@@ -1,7 +1,15 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 
 (async () => {
+  const distFolder = path.join(__dirname, "dist");
+
+  if (fs.existsSync(distFolder)) {
+    console.log("Deleting dist folder...");
+    await fs.promises.rm(distFolder, { recursive: true, force: true });
+  }
+
   const ls = spawn("npm", ["run", process.platform === "win32" ? "win:start" : "linux:start"], { cwd: path.join(__dirname), shell: true });
 
   ls.stdout.on('data', function (data) {
