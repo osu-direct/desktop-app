@@ -2,10 +2,13 @@ import { app, BrowserWindow, Menu } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 
+let mainWindow: BrowserWindow;
+let settingsWindow: BrowserWindow;
+
 setupTitlebar();
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     height: 1020,
     width: 1400,
     titleBarStyle: 'hidden',
@@ -19,6 +22,30 @@ function createWindow() {
   });
 
   mainWindow.webContents.setUserAgent("osu.direct-desktop");
+
+  mainWindow.webContents.addListener("will-navigate", (e, i) => {
+    if (i.endsWith("/settings")) {
+      e.preventDefault();
+      //TODO: open settings window
+      settingsWindow = new BrowserWindow({
+        parent: mainWindow,
+        modal: true,
+        width: 500,
+        height: 300,
+        title: "Settings",
+        alwaysOnTop: true,
+        titleBarStyle: 'default',
+        frame: true,
+        webPreferences: {
+          preload: path.join(__dirname, "settings_preload.js"),
+          nodeIntegration: true,
+          sandbox: false,
+        },
+      });
+      settingsWindow.show();
+      settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
+    }
+  });
 
   mainWindow.webContents.on("did-finish-load", () => mainWindow.show())
 
