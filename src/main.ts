@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, screen } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import electronReload from "electron-reload";
@@ -11,10 +11,19 @@ let settingsWindow: BrowserWindow;
 setupTitlebar();
 
 function createWindow() {
+
+  const windowWidth = 1800;
+  const windowHeight = 1000;
+
+  const point = screen.getCursorScreenPoint();
+  const { bounds } = screen.getDisplayNearestPoint(point);
+
   mainWindow = new BrowserWindow({
-    height: 1020,
-    width: 1400,
     titleBarStyle: 'hidden',
+    x: bounds.x,
+    y: bounds.y,
+    width: windowWidth,
+    height: windowHeight,
     frame: false,
     show: false,
     webPreferences: {
@@ -22,6 +31,9 @@ function createWindow() {
       nodeIntegration: true,
     },
   });
+
+  mainWindow.setSize(windowWidth, windowHeight);
+  mainWindow.center();
 
   mainWindow.webContents.setUserAgent("osu.direct-desktop");
 
@@ -45,6 +57,8 @@ function createWindow() {
       });
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
+    } else if(i.startsWith("https://osu.direct/d/")){
+      //TODO: download handling
     }
   });
 
