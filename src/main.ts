@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Menu } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
+import electronReload from "electron-reload";
 
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
@@ -72,3 +73,7 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+electronReload(__dirname, {
+  electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+})
