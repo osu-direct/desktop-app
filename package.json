@@ -18,6 +18,9 @@
     "nsis": {
       "runAfterFinish": true
     },
+    "portable": {
+      "artifactName": "osu.direct.exe"
+    },
     "files": [
       "assets/**",
       "html/**",

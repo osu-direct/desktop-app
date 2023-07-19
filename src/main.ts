@@ -3,6 +3,8 @@ import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/
 import * as path from "path";
 import electronReload from "electron-reload";
 
+const isDev = 'ELECTRON_IS_DEV' in process.env || !app.isPackaged;
+
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
 
@@ -57,7 +59,8 @@ function createWindow() {
 
   mainWindow.loadURL("https://osu.direct/browse");
 
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (isDev)
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
 }
 
 app.whenReady().then(() => {
@@ -74,6 +77,7 @@ app.on("window-all-closed", () => {
   }
 });
 
-electronReload(__dirname, {
-  electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
-})
+if (isDev)
+  electronReload(__dirname, {
+    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+  })
