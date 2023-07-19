@@ -18,6 +18,8 @@ function createWindow() {
     },
   });
 
+  mainWindow.webContents.setUserAgent("osu.direct-desktop");
+
   mainWindow.webContents.on("did-finish-load", () => mainWindow.show())
 
   mainWindow.hide();
