@@ -20,13 +20,13 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run compile
-      - name: Add Artifact to Release
-        uses: xresloader/upload-to-github-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add Artifact
+        uses: actions/upload-artifact@v3
         with:
-          file: "release/osudirect-desktop_0.0.1_amd64.snap;release/osudirect-desktop-0.0.1.AppImage"
-          tags: true
+          name: artifact
+          path: |
+            release/osudirect-desktop.snap
+            release/osudirect-desktop.AppImage
 
   build-win:
     runs-on: windows-latest
@@ -43,10 +43,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run compile
-      - name: Add Artifact to Release
-        uses: xresloader/upload-to-github-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add Artifact
+        uses: actions/upload-artifact@v3
         with:
-          file: "release/osu.direct.exe"
-          tags: true
+          name: artifact
+          path: |
+            release\osu-direct.exe
