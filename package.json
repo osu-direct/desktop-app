@@ -9,6 +9,9 @@
     "directories": {
       "output": "release"
     },
+    "linux": {
+      "icon": "./assets/logo.png"
+    },
     "win": {
       "icon": "./assets/logo.png",
       "target": [
