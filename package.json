@@ -73,7 +73,7 @@
     "tsx": "^3.12.7"
   },
   "dependencies": {
-    "custom-electron-titlebar": "^4.2.3",
+    "custom-electron-titlebar": "^4.2.4",
     "electron-reload": "^2.0.0-alpha.1"
   }
 }
