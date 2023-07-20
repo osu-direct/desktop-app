@@ -25,8 +25,8 @@ jobs:
         with:
           name: artifact
           path: |
-            osudirect.snap
-            osudirect.AppImage
+            release/osudirect.snap
+            release/osudirect.AppImage
 
   build-win:
     runs-on: windows-latest
@@ -48,4 +48,4 @@ jobs:
         with:
           name: artifact
           path: |
-            osudirect.exe
+            release/osudirect.exe
