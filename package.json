@@ -24,7 +24,7 @@
     "portable": {
       "artifactName": "osudirect.exe"
     },
-    "appimage": {
+    "appImage": {
       "artifactName": "osudirect.AppImage"
     },
     "snap": {
