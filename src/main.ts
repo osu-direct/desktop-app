@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, screen } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, screen } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import electronReload from "electron-reload";
@@ -43,11 +43,16 @@ function createWindow() {
       //TODO: open settings window
       settingsWindow = new BrowserWindow({
         parent: mainWindow,
+        icon: path.join(__dirname, "..", "assets", "logo.png"),
         modal: true,
         width: 500,
-        height: 300,
+        height: 200,
         title: "Settings",
         alwaysOnTop: true,
+        type: "dialog",
+        minimizable: false,
+        maximizable: false,
+        resizable: false,
         titleBarStyle: 'default',
         frame: true,
         webPreferences: {
@@ -55,9 +60,17 @@ function createWindow() {
           nodeIntegration: true,
         },
       });
+      ipcMain.handle("browse-folder", async () => {
+        const yes = await dialog.showOpenDialog(settingsWindow, {
+          properties: ['openDirectory'],
+        });
+        console.log(yes);
+        if(yes.canceled || yes.filePaths.length <= 0) return "";
+        return yes.filePaths[0];
+      })
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
-    } else if(i.startsWith("https://osu.direct/d/")){
+    } else if (i.startsWith("https://osu.direct/d/")) {
       //TODO: download handling
     }
   });
