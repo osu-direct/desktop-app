@@ -26,12 +26,6 @@ jobs:
           name: artifact
           path: |
             release/*.AppImage
-      - name: Send artifact to Discord
-        uses: sinshutu/upload-to-discord@v2.0.0
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: release/*.AppImage
 
   build-win:
     runs-on: windows-latest
@@ -54,9 +48,3 @@ jobs:
           name: artifact
           path: |
             release/*.exe
-      - name: Send artifact to Discord
-        uses: sinshutu/upload-to-discord@v2.0.0
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: release/*.exe
