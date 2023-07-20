@@ -10,7 +10,10 @@
       "output": "release"
     },
     "linux": {
-      "icon": "./assets/logo.png"
+      "icon": "./assets/logo.png",
+      "target": [
+        "AppImage"
+      ]
     },
     "win": {
       "icon": "./assets/logo.png",
@@ -22,17 +25,10 @@
       "runAfterFinish": true
     },
     "portable": {
-      "artifactName": "osudirect.exe"
+      "artifactName": "osudirect-${version}.exe"
     },
     "appImage": {
-      "artifactName": "osudirect.AppImage"
-    },
-    "snap": {
-      "artifactName": "osudirect.snap",
-      "publish": {
-        "provider": "generic",
-        "url": "https://disablethisshit.com"
-      }
+      "artifactName": "osudirect-${version}.AppImage"
     },
     "files": [
       "assets/**",
