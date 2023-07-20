@@ -22,13 +22,13 @@
       "runAfterFinish": true
     },
     "portable": {
-      "artifactName": "osu-direct.exe"
+      "artifactName": "osudirect.exe"
     },
     "appimage": {
-      "artifactName": "osu-direct.AppImage"
+      "artifactName": "osudirect.AppImage"
     },
     "snap": {
-      "artifactName": "osu-direct.snap"
+      "artifactName": "osudirect.snap"
     },
     "files": [
       "assets/**",
