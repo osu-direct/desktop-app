@@ -20,13 +20,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run compile
-      - name: Add Artifact
+      - name: Add Artifact to Workflow
         uses: actions/upload-artifact@v3
         with:
           name: artifact
           path: |
-            release/osudirect.snap
-            release/osudirect.AppImage
+            release/*.AppImage
+      - name: Send artifact to Discord
+        uses: sinshutu/upload-to-discord@v2.0.0
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: release/*.AppImage
 
   build-win:
     runs-on: windows-latest
@@ -43,9 +48,15 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run compile
-      - name: Add Artifact
+      - name: Add Artifact to Workflow
         uses: actions/upload-artifact@v3
         with:
           name: artifact
           path: |
-            release/osudirect.exe
+            release/*.exe
+      - name: Send artifact to Discord
+        uses: sinshutu/upload-to-discord@v2.0.0
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: release/*.exe
