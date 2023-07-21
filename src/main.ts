@@ -10,14 +10,6 @@ let settingsWindow: BrowserWindow;
 
 setupTitlebar();
 
-ipcMain.handle("browse-folder", async () => {
-  const yes = await dialog.showOpenDialog(settingsWindow, {
-    properties: ['openDirectory'],
-  });
-  if (yes.canceled || yes.filePaths.length <= 0) return "";
-  return yes.filePaths[0];
-})
-
 function createWindow() {
 
   const windowWidth = 1800;
