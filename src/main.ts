@@ -27,6 +27,7 @@ function createWindow() {
     frame: false,
     show: false,
     webPreferences: {
+      nodeIntegrationInWorker: true,
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
@@ -66,6 +67,7 @@ function createWindow() {
         titleBarStyle: 'default',
         frame: true,
         webPreferences: {
+          nodeIntegrationInWorker: true,
           preload: path.join(__dirname, "settings_preload.js"),
           nodeIntegration: true,
         },
