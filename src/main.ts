@@ -78,9 +78,6 @@ function createWindow() {
           nodeIntegration: true,
         },
       });
-      mainWindow.setProgressBar(1, {
-        mode: 'indeterminate'
-      });
       settingsWindow.center();
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
