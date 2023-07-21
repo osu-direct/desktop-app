@@ -3,7 +3,6 @@ import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/
 import * as path from "path";
 import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
-import { initMitm } from "./proxy";
 
 const isDev = 'ELECTRON_IS_DEV' in process.env || !app.isPackaged;
 
@@ -113,8 +112,7 @@ app.whenReady().then(async () => {
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-
-  await initMitm();
+  
 });
 
 app.on("window-all-closed", () => {
