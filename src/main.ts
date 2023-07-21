@@ -10,6 +10,14 @@ let settingsWindow: BrowserWindow;
 
 setupTitlebar();
 
+ipcMain.handle("browse-folder", async () => {
+  const yes = await dialog.showOpenDialog(settingsWindow, {
+    properties: ['openDirectory'],
+  });
+  if (yes.canceled || yes.filePaths.length <= 0) return "";
+  return yes.filePaths[0];
+})
+
 function createWindow() {
 
   const windowWidth = 1800;
@@ -70,15 +78,10 @@ function createWindow() {
           nodeIntegration: true,
         },
       });
+      mainWindow.setProgressBar(1, {
+        mode: 'indeterminate'
+      });
       settingsWindow.center();
-      ipcMain.handle("browse-folder", async () => {
-        const yes = await dialog.showOpenDialog(settingsWindow, {
-          properties: ['openDirectory'],
-        });
-        console.log(yes);
-        if (yes.canceled || yes.filePaths.length <= 0) return "";
-        return yes.filePaths[0];
-      })
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
     } else if (i.startsWith("https://osu.direct/d/")) {
