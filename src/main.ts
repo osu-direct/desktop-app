@@ -2,6 +2,8 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, screen, shell } from "electr
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import electronReload from "electron-reload";
+import * as configStorage from './configStorage';
+import { initMitm } from "./proxy";
 
 const isDev = 'ELECTRON_IS_DEV' in process.env || !app.isPackaged;
 
@@ -9,6 +11,7 @@ let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
 
 setupTitlebar();
+configStorage.init();
 
 function createWindow() {
 
@@ -104,12 +107,14 @@ function createWindow() {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  await initMitm();
 });
 
 app.on("window-all-closed", () => {
