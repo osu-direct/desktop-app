@@ -49,8 +49,8 @@
     "start": "tsx start.ts",
     "rebuild": "electron-rebuild",
     "compile": "tsx compile.ts",
-    "linux:start": "npm run build && electron ./dist/main.js",
-    "linux:compile": "npm run build && electron-builder",
+    "linux:start": "npm run build && cp -r src/mitm/scripts/ dist/mitm/ && electron ./dist/main.js",
+    "linux:compile": "npm run build && cp -r src/mitm/scripts/ dist/mitm/ && electron-builder",
     "win:start": "npm run build && electron ./dist/main.js",
     "win:compile": "npm run build && electron-builder",
     "build": "tsc",
@@ -77,11 +77,14 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@pureproxy/mitmproxy": "^2.2.0",
     "@types/better-sqlite3": "^7.6.4",
     "@types/mitm": "^1.3.4",
+    "@types/ws": "^8.5.5",
     "better-sqlite3": "^8.5.0",
     "custom-electron-titlebar": "^4.2.4",
     "electron-rebuild": "^3.2.9",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-reload": "^2.0.0-alpha.1",
+    "ws": "^8.13.0"
   }
 }
