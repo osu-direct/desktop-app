@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, screen } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, screen, shell } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import electronReload from "electron-reload";
@@ -31,6 +31,12 @@ function createWindow() {
       nodeIntegration: true,
     },
   });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (!url.startsWith("https://osu.direct"))
+      shell.openExternal(url);
+    return { action: 'deny' }
+  })
 
   mainWindow.setSize(windowWidth, windowHeight);
   mainWindow.center();
@@ -65,7 +71,7 @@ function createWindow() {
           properties: ['openDirectory'],
         });
         console.log(yes);
-        if(yes.canceled || yes.filePaths.length <= 0) return "";
+        if (yes.canceled || yes.filePaths.length <= 0) return "";
         return yes.filePaths[0];
       })
       settingsWindow.show();
