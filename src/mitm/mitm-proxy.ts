@@ -443,7 +443,6 @@ export default class MITMProxy {
 
   private static _cleanupCalled = false;
   private static _cleanup(): void {
-    console.log("mitm exited");
     if (MITMProxy._cleanupCalled) {
       return;
     }
