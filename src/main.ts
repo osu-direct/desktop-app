@@ -3,8 +3,9 @@ import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/
 import * as path from "path";
 import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
-import * as mitm from './mitm/mitm-proxy';
 import { main } from "./proxy";
+
+app.commandLine.appendSwitch("no-proxy-server");
 
 const isDev = 'ELECTRON_IS_DEV' in process.env || !app.isPackaged;
 
