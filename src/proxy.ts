@@ -56,11 +56,15 @@ async function makeProxy() {
           interceptedMsg.setResponseBody(Buffer.from(`-1\nThis request has been hijacked by osu.direct`, 'utf8'));
           return;
         }
-        interceptedMsg.setResponseBody(Buffer.from(`-1\nThis request has been hijacked by osu.direct`, 'utf8'));
-        const ye = await apiResult.text();
-        console.log(ye);
+        //interceptedMsg.setResponseBody(Buffer.from(`-1\nThis request has been hijacked by osu.direct`, 'utf8'));
+        let ye = await apiResult.text();
+        if (ye.startsWith("100"))
+          ye = "101\n" + ye.substring(4, ye.length);
+        
+        interceptedMsg.setResponseBody(Buffer.from(ye, 'utf8'));
+      } else {
+        console.log("REQUEST:", req.url.pathname, interceptedMsg.responseBody.toString("utf8"));
       }
-      //console.log("REQUEST:", req);
     }
   });
 }

@@ -349,6 +349,13 @@ export default class MITMProxy {
    */
   public static async Create(cb: Interceptor = nopInterceptor, interceptPaths: string[] = [], quiet: boolean = true, onlyInterceptTextFiles = false, ignoreHosts: string | null = null): Promise<MITMProxy> {
     // Construct WebSocket server, and wait for it to begin listening.
+
+    //Ensure that all mitmdump runnables are killed
+    if (process.platform == "win32")
+      exec(`taskkill /im mitmdump.exe /t`);
+    else
+      exec(`pkill -9 -f mitmdump`);
+
     const wss = new WebSocketServer({ host: "127.0.0.1", port: 8765 });
     const proxyConnected = new Promise<void>((resolve, reject) => {
       wss.once('connection', () => {
