@@ -65,8 +65,12 @@ async function makeProxy() {
   });
 }
 
+let mitmProxy: MITMProxy;
+
 export async function main() {
-  const proxy = await makeProxy();
-  // when done:
-  await proxy.shutdown();
+  mitmProxy = await makeProxy();
+}
+
+export async function shutdown() {
+  mitmProxy.stop();
 }

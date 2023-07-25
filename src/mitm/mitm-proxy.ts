@@ -6,6 +6,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { resolve } from 'path';
 import { parse as parseURL, Url } from 'url';
 import { createConnection, Socket } from 'net';
+import { exec } from 'child_process';
 
 /**
  * Wait for the specified port to open.
@@ -405,9 +406,6 @@ export default class MITMProxy {
           process.on('SIGINT', MITMProxy._cleanup);
           process.on('exit', MITMProxy._cleanup);
         }
-        process.once('exit', function () {
-          mitmProcess.kill("SIGINT");
-        });
         mp._initializeMITMProxy(mitmProcess);
         // Wait for port 8080 to come online.
         const waitingForPort = waitForPort(8080);
@@ -429,6 +427,18 @@ export default class MITMProxy {
     }
 
     return mp;
+  }
+
+  stop() {
+    MITMProxy._activeProcesses.forEach((p) => {
+      p.kill('SIGKILL');
+    });
+    // the above somehow does not kill mitm on windows.
+    if (process.platform == "win32")
+      exec(`taskkill /im mitmdump.exe /t`);
+    else
+      exec(`pkill -9 -f mitmdump`);
+    this._wss.close();
   }
 
   private static _cleanupCalled = false;
