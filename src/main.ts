@@ -3,7 +3,7 @@ import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/
 import * as path from "path";
 import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
-import { main } from "./proxy";
+import { main, shutdown } from "./proxy";
 
 app.commandLine.appendSwitch("no-proxy-server");
 
@@ -14,6 +14,8 @@ let settingsWindow: BrowserWindow;
 
 setupTitlebar();
 configStorage.init();
+
+app.on("before-quit", () => shutdown());
 
 (async () => {
   await main();
