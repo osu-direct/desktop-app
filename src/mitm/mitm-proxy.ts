@@ -1,8 +1,11 @@
-import {Server as WebSocketServer} from 'ws';
-import {spawn, ChildProcess} from 'child_process';
-import {resolve} from 'path';
-import {parse as parseURL, Url} from 'url';
-import {createConnection, Socket} from 'net';
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Server as WebSocketServer } from 'ws';
+import { spawn, ChildProcess } from 'child_process';
+import { resolve } from 'path';
+import { parse as parseURL, Url } from 'url';
+import { createConnection, Socket } from 'net';
 
 /**
  * Wait for the specified port to open.
@@ -35,14 +38,14 @@ function waitForPort(port: number, retries: number = 10, interval: number = 500)
         reject(new Error('out of retries'));
       }
 
-      socket = createConnection(port, "localhost", function() {
+      socket = createConnection(port, "localhost", function () {
         clearTimerAndDestroySocket();
         if (retriesRemaining >= 0) resolve();
       });
 
-      timer = setTimeout(function() { retry(); }, retryInterval);
+      timer = setTimeout(function () { retry(); }, retryInterval);
 
-      socket.on('error', function(err) {
+      socket.on('error', function (err) {
         clearTimerAndDestroySocket();
         setTimeout(retry, retryInterval);
       });
@@ -60,14 +63,14 @@ export type Interceptor = (m: InterceptedHTTPMessage) => void | Promise<void>;
 /**
  * An interceptor that does nothing.
  */
-export function nopInterceptor(m: InterceptedHTTPMessage): void {}
+export function nopInterceptor(m: InterceptedHTTPMessage): void { }
 
 /**
  * The core HTTP response.
  */
 export interface HTTPResponse {
   statusCode: number,
-  headers: {[name: string]: string};
+  headers: { [name: string]: string };
   body: Buffer;
 }
 
@@ -270,7 +273,7 @@ export class InterceptedHTTPMessage {
     this.response.setHeader('content-length', `${b.length}`);
     // TODO: Content-encoding?
   }
-  
+
   /**
    * Changes the status code of the HTTP response.
    * @param code The new status code.
@@ -299,7 +302,7 @@ export class StashedItem {
   constructor(
     public readonly rawUrl: string,
     public readonly mimeType: string,
-    public readonly data: Buffer) {}
+    public readonly data: Buffer) { }
 
   public get shortMimeType(): string {
     let mime = this.mimeType.toLowerCase();
@@ -314,7 +317,7 @@ export class StashedItem {
   }
 
   public get isJavaScript(): boolean {
-    switch(this.shortMimeType) {
+    switch (this.shortMimeType) {
       case 'text/javascript':
       case 'application/javascript':
       case 'text/x-javascript':
@@ -345,7 +348,7 @@ export default class MITMProxy {
    */
   public static async Create(cb: Interceptor = nopInterceptor, interceptPaths: string[] = [], quiet: boolean = true, onlyInterceptTextFiles = false, ignoreHosts: string | null = null): Promise<MITMProxy> {
     // Construct WebSocket server, and wait for it to begin listening.
-    const wss = new WebSocketServer({ port: 8765 });
+    const wss = new WebSocketServer({ host: "127.0.0.1", port: 8765 });
     const proxyConnected = new Promise<void>((resolve, reject) => {
       wss.once('connection', () => {
         resolve();
@@ -374,27 +377,25 @@ export default class MITMProxy {
         }
         // Start up MITM process.
         // --anticache means to disable caching, which gets in the way of transparently rewriting content.
-        const scriptArgs = interceptPaths.length > 0 ? ["--set", `intercept=${interceptPaths.join(",")}`] : [];
+        /* const scriptArgs = interceptPaths.length > 0 ? ["--set", `intercept=${interceptPaths.join(",")}`] : [];
         scriptArgs.push("--set", `onlyInterceptTextFiles=${onlyInterceptTextFiles}`);
         if (ignoreHosts) {
           scriptArgs.push(`--ignore-hosts`, ignoreHosts);
         }
 
-        console.log(scriptArgs);
-        const options = ["--anticache", "-s", resolve(__dirname, `./scripts/proxy.py`)].concat(scriptArgs);
+        console.log(scriptArgs); */
+        const options = ["--anticache", "-s", resolve(__dirname, `./scripts/proxy.py`)];
         if (quiet) {
           options.push('-q');
         }
-        
+
         // allow self-signed SSL certificates
         options.push("--ssl-insecure");
         console.log(options);
         const mitmProcess = spawn("mitmdump", options, {
-          stdio: 'inherit'
-        });
-        mitmProcess.stdout.on('data', function (data) {
-          if (data.toString().length > 0)
-            console.log(data.toString());
+          stdio: 'inherit',
+          shell: true,
+          windowsHide: true,
         });
         const mitmProxyExited = new Promise<void>((_, reject) => {
           mitmProcess.once('error', reject);
@@ -404,6 +405,9 @@ export default class MITMProxy {
           process.on('SIGINT', MITMProxy._cleanup);
           process.on('exit', MITMProxy._cleanup);
         }
+        process.once('exit', function () {
+          mitmProcess.kill("SIGINT");
+        });
         mp._initializeMITMProxy(mitmProcess);
         // Wait for port 8080 to come online.
         const waitingForPort = waitForPort(8080);
@@ -411,7 +415,7 @@ export default class MITMProxy {
           // Fails if mitmproxy exits before port becomes available.
           await Promise.race([mitmProxyExited, waitingForPort]);
         } catch (e) {
-          if (e && typeof(e) === 'object' && e.code === "ENOENT") {
+          if (e && typeof (e) === 'object' && e.code === "ENOENT") {
             throw new Error(`mitmdump, which is an executable that ships with mitmproxy, is not on your PATH. Please ensure that you can run mitmdump --version successfully from your command line.`)
           } else {
             throw new Error(`Unable to start mitmproxy: ${e}`);
@@ -462,7 +466,7 @@ export default class MITMProxy {
     return this._stashFilter;
   }
   public set stashFilter(value: (url: string, item: StashedItem) => boolean) {
-    if (typeof(value) === 'function') {
+    if (typeof (value) === 'function') {
       this._stashFilter = value;
     } else if (value === null) {
       this._stashFilter = defaultStashFilter;
@@ -487,7 +491,7 @@ export default class MITMProxy {
       ws.on('message', async (message: Buffer) => {
         const original = InterceptedHTTPMessage.FromBuffer(message);
         const rv = this.cb(original);
-        if (rv && typeof(rv) === 'object' && rv.then) {
+        if (rv && typeof (rv) === 'object' && rv.then) {
           await rv;
         }
         // Remove transfer-encoding. We don't support chunked.
@@ -537,36 +541,36 @@ export default class MITMProxy {
   /**
    * Requests the given URL from the proxy.
    */
-/*   public async proxyGet(urlString: string): Promise<HTTPResponse> {
-    const url = parseURL(urlString);
-    const get = url.protocol === "http:" ? httpGet : httpsGet;
-    return new Promise<HTTPResponse>((resolve, reject) => {
-      const req = get({
-        url: urlString,
-        headers: {
-          host: url.host
-        },
-        host: 'localhost',
-        port: 8080,
-        path: urlString
-      }, (res) => {
-        const data = new Array<Buffer>();
-        res.on('data', (chunk: Buffer) => {
-          data.push(chunk);
+  /*   public async proxyGet(urlString: string): Promise<HTTPResponse> {
+      const url = parseURL(urlString);
+      const get = url.protocol === "http:" ? httpGet : httpsGet;
+      return new Promise<HTTPResponse>((resolve, reject) => {
+        const req = get({
+          url: urlString,
+          headers: {
+            host: url.host
+          },
+          host: 'localhost',
+          port: 8080,
+          path: urlString
+        }, (res) => {
+          const data = new Array<Buffer>();
+          res.on('data', (chunk: Buffer) => {
+            data.push(chunk);
+          });
+          res.on('end', () => {
+            const d = Buffer.concat(data);
+            resolve({
+              statusCode: res.statusCode,
+              headers: res.headers,
+              body: d
+            } as HTTPResponse);
+          });
+          res.once('error', reject);
         });
-        res.on('end', () => {
-          const d = Buffer.concat(data);
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: d
-          } as HTTPResponse);
-        });
-        res.once('error', reject);
+        req.once('error', reject);
       });
-      req.once('error', reject);
-    });
-  } */
+    } */
 
   public async shutdown(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
