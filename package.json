@@ -68,7 +68,7 @@
   "author": "HorizonCode",
   "license": "CC0-1.0",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.1.0",
     "electron": "^25.3.1",
     "electron-builder": "^24.4.0",
