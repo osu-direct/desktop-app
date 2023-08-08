@@ -1,9 +1,9 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, screen, shell } from "electron";
+import { app, BrowserWindow, dialog, Event, ipcMain, Menu, screen, shell } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
-import { main, shutdown } from "./proxy";
+/* import { main, shutdown } from "./proxy"; */
 
 app.commandLine.appendSwitch("no-proxy-server");
 
@@ -15,11 +15,11 @@ let settingsWindow: BrowserWindow;
 setupTitlebar();
 configStorage.init();
 
-app.on("before-quit", () => shutdown());
+/* app.on("before-quit", () => shutdown()); */
 
-(async () => {
+/* (async () => {
   await main();
-})();
+})(); */
 
 function createWindow() {
 
@@ -87,6 +87,7 @@ function createWindow() {
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
     } else if (i.startsWith("https://osu.direct/d/")) {
+      e.preventDefault();
       //TODO: download handling
     }
   });
@@ -98,6 +99,15 @@ function createWindow() {
     console.log(yes);
     if (yes.canceled || yes.filePaths.length <= 0) return "";
     return yes.filePaths[0];
+  })
+
+  ipcMain.handle("get-folder", async () => {
+    const folder: string = (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
+    return folder
+  })
+
+  ipcMain.on("set-folder", async (_e: Event, folder: string) => {
+    configStorage.set("songs_dir", folder)
   })
 
   mainWindow.webContents.on("did-finish-load", () => mainWindow.show())
