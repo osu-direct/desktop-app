@@ -43,5 +43,7 @@ window.addEventListener("DOMContentLoaded", () => {
   //document.getElementsByClassName("nav-left")[0].appendChild(settingsItem);
   navHeader[0].appendChild(settingsItem);
 
+  //Disable User selecting text
+  document.querySelector('body').style.userSelect = "none";
 
 });
