@@ -73,7 +73,7 @@
     "electron": "^26.1.0",
     "electron-builder": "^24.6.3",
     "eslint": "^8.47.0",
-    "tsx": "^3.12.7",
+    "tsx": "^3.12.8",
     "typescript": "^5.2.2"
   },
   "dependencies": {
