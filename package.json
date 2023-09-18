@@ -68,11 +68,11 @@
   "author": "HorizonCode",
   "license": "CC0-1.0",
   "devDependencies": {
+    "@electron/rebuild": "^3.3.0",
     "@typescript-eslint/eslint-plugin": "^6.6.0",
     "@typescript-eslint/parser": "^6.6.0",
     "electron": "^25.8.1",
     "electron-builder": "^24.6.4",
-    "electron-rebuild": "^3.2.9",
     "eslint": "^8.48.0",
     "tsx": "^3.12.8",
     "typescript": "^5.2.2"
