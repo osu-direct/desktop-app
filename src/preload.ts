@@ -4,7 +4,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const titlebar = new Titlebar({
     backgroundColor: TitlebarColor.fromHex("#1e1e2e"),
     itemBackgroundColor: TitlebarColor.fromHex("#121212"),
-    menu: null,
     enableMnemonics: false,
   });
   titlebar.updateTitle(`osu.direct`);
