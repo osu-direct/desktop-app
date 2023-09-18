@@ -2,7 +2,6 @@ import { app, BrowserWindow, dialog, Event, ipcMain, Menu, screen, shell } from 
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
 import * as fs from 'fs';
-import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
 import { getFilenameFromHeaders } from "./requestUtil";
 /* import { main, shutdown } from "./proxy"; */
@@ -168,8 +167,3 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
-
-if (isDev)
-  electronReload(__dirname, {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
-  })
