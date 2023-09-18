@@ -72,6 +72,8 @@
     "@typescript-eslint/parser": "^6.6.0",
     "electron": "^25.8.1",
     "electron-builder": "^24.6.4",
+    "electron-rebuild": "^3.2.9",
+    "electron-reload": "^2.0.0-alpha.1",
     "eslint": "^8.48.0",
     "tsx": "^3.12.8",
     "typescript": "^5.2.2"
@@ -81,8 +83,6 @@
     "@types/ws": "^8.5.5",
     "better-sqlite3": "^8.6.0",
     "custom-electron-titlebar": "^4.2.7",
-    "electron-rebuild": "^3.2.9",
-    "electron-reload": "^2.0.0-alpha.1",
     "ws": "^8.13.0"
   }
 }
