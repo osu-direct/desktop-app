@@ -1,8 +1,10 @@
 import { app, BrowserWindow, dialog, Event, ipcMain, Menu, screen, shell } from "electron";
 import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import * as path from "path";
+import * as fs from 'fs';
 import electronReload from "electron-reload";
 import * as configStorage from './configStorage';
+import { getFilenameFromHeaders } from "./requestUtil";
 /* import { main, shutdown } from "./proxy"; */
 
 app.commandLine.appendSwitch("no-proxy-server");
@@ -55,7 +57,7 @@ function createWindow() {
 
   mainWindow.webContents.setUserAgent("osu.direct-desktop");
 
-  mainWindow.webContents.addListener("will-navigate", (e, i) => {
+  mainWindow.webContents.addListener("will-navigate", async (e, i) => {
     if (i.endsWith("/settings")) {
       e.preventDefault();
       //TODO: open settings window
@@ -86,9 +88,37 @@ function createWindow() {
       settingsWindow.center();
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
-    } else if (i.startsWith("https://osu.direct/d/")) {
+    } else if (i.startsWith("https://osu.direct/api/d/")) {
       e.preventDefault();
-      //TODO: download handling
+      const folder: string = (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
+      if (!folder || folder == "") {
+        mainWindow.webContents.executeJavaScript(`doAlert('warn', 'You need to set your Downloads Folder first in the Settings.')`);
+        return;
+      }
+      const splittedUrl = i.split("/");
+      const setID = splittedUrl.pop();
+      console.log("SetID:", setID);
+      mainWindow.webContents.executeJavaScript(`doAlert('info', 'Downloading Set: ${setID}')`);
+      const fetchResult = await fetch(i, {
+        method: "GET",
+        mode: "cors"
+      });
+      if (!fetchResult.ok) {
+        mainWindow.webContents.executeJavaScript(`doAlert('error', 'Failed to download Set: ${setID}')`);
+        return;
+      }
+      const headers = fetchResult.headers;
+      const filename = getFilenameFromHeaders(headers);
+      const fetchBlob = await fetchResult.blob();
+      const fetchArrayBuffer = await fetchBlob.arrayBuffer();
+      const fetchBuffer = Buffer.from(fetchArrayBuffer);
+      console.log(folder, fetchBlob.type);
+      if (fetchBlob.type != "application/octet-stream") {
+        mainWindow.webContents.executeJavaScript(`doAlert('error', 'Failed to download Set: ${setID}')`);
+      }
+
+      await fs.promises.writeFile(path.join(folder, filename), fetchBuffer);
+      mainWindow.webContents.executeJavaScript(`doAlert('success', 'Successfully downloaded Set: ${setID}')`);
     }
   });
 
