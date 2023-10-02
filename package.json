@@ -80,7 +80,7 @@
   "dependencies": {
     "@types/better-sqlite3": "^7.6.4",
     "@types/ws": "^8.5.5",
-    "better-sqlite3": "^8.6.0",
+    "better-sqlite3": "^8.7.0",
     "custom-electron-titlebar": "^4.2.7",
     "ws": "^8.13.0"
   }
