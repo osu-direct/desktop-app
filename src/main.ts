@@ -87,7 +87,7 @@ function createWindow() {
       settingsWindow.center();
       settingsWindow.show();
       settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
-    } else if (i.startsWith("https://osu.direct/api/d/")) {
+    } else if (i.includes("/d/")) {
       e.preventDefault();
       const folder: string = (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
       if (!folder || folder == "") {
@@ -95,8 +95,7 @@ function createWindow() {
         return;
       }
       const splittedUrl = i.split("/");
-      const setID = splittedUrl.pop();
-      console.log("SetID:", setID);
+      const setID = splittedUrl.pop().replace(/\?noVideo/gi, " (noVideo)");
       mainWindow.webContents.executeJavaScript(`doAlert('info', 'Downloading Set: ${setID}')`);
       const fetchResult = await fetch(i, {
         method: "GET",
@@ -111,7 +110,6 @@ function createWindow() {
       const fetchBlob = await fetchResult.blob();
       const fetchArrayBuffer = await fetchBlob.arrayBuffer();
       const fetchBuffer = Buffer.from(fetchArrayBuffer);
-      console.log(folder, fetchBlob.type);
       if (fetchBlob.type != "application/octet-stream") {
         mainWindow.webContents.executeJavaScript(`doAlert('error', 'Failed to download Set: ${setID}')`);
       }
@@ -122,12 +120,11 @@ function createWindow() {
   });
 
   ipcMain.handle("browse-folder", async () => {
-    const yes = await dialog.showOpenDialog(settingsWindow, {
+    const openFolderDialog = await dialog.showOpenDialog(settingsWindow, {
       properties: ['openDirectory'],
     });
-    console.log(yes);
-    if (yes.canceled || yes.filePaths.length <= 0) return "";
-    return yes.filePaths[0];
+    if (openFolderDialog.canceled || openFolderDialog.filePaths.length <= 0) return "";
+    return openFolderDialog.filePaths[0];
   })
 
   ipcMain.handle("get-folder", async () => {
