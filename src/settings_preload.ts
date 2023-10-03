@@ -1,7 +1,6 @@
 import { ipcRenderer } from "electron";
 
 window.addEventListener("DOMContentLoaded", async () => {
-  //TODO: settings here
   const inputField = document.getElementById("download-folder") as HTMLInputElement;
 
   const folder = await ipcRenderer.invoke("get-folder");
