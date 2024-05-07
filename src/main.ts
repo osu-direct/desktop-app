@@ -1,14 +1,29 @@
-import { app, BrowserWindow, dialog, Event, ipcMain, Menu, screen, shell } from "electron";
-import { setupTitlebar, attachTitlebarToWindow } from 'custom-electron-titlebar/main';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  Event,
+  ipcMain,
+  Menu,
+  screen,
+  shell,
+} from "electron";
+import {
+  attachTitlebarToWindow,
+  setupTitlebar,
+} from "custom-electron-titlebar/main";
 import * as path from "path";
-import * as fs from 'fs';
-import * as configStorage from './configStorage';
+import * as fs from "fs";
+import * as configStorage from "./configStorage";
 import { getFilenameFromHeaders } from "./requestUtil";
+import os from "os";
+import { processes } from "systeminformation";
+import { runFile } from "./execUtil";
 /* import { main, shutdown } from "./proxy"; */
 
 app.commandLine.appendSwitch("no-proxy-server");
 
-const isDev = 'ELECTRON_IS_DEV' in process.env || !app.isPackaged;
+const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
@@ -23,15 +38,14 @@ configStorage.init();
 })(); */
 
 function createWindow() {
-
-  const windowWidth = 1800;
-  const windowHeight = 1000;
+  const windowWidth = 1600;
+  const windowHeight = 900;
 
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
 
   mainWindow = new BrowserWindow({
-    titleBarStyle: 'hidden',
+    titleBarStyle: "hidden",
     x: bounds.x,
     y: bounds.y,
     width: windowWidth,
@@ -46,17 +60,71 @@ function createWindow() {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith("https://osu.direct"))
+    if (!url.startsWith("https://osu.direct")) {
       shell.openExternal(url);
-    return { action: 'deny' }
-  })
+    }
+    return { action: "deny" };
+  });
 
   mainWindow.setSize(windowWidth, windowHeight);
   mainWindow.center();
 
-  mainWindow.webContents.setUserAgent("osu.direct-desktop");
+  mainWindow.webContents.setUserAgent("osu.direct");
+
+  ipcMain.handle("download", async (_e, data) => {
+    const tempFolder = path.join(os.tmpdir());
+    const osuExecuteable = (await processes()).list.find((process) =>
+      process.name == "osu!.exe"
+    );
+    let saveFolder = tempFolder;
+    if (!osuExecuteable) {
+      const folder: string =
+        (await configStorage.get("songs_dir") ?? { val: "" })
+          .val as string;
+      if (!folder || folder == "") {
+        const point = screen.getCursorScreenPoint();
+        const { bounds } = screen.getDisplayNearestPoint(point);
+        settingsWindow = new BrowserWindow({
+          parent: mainWindow,
+          x: bounds.x,
+          y: bounds.y,
+          icon: path.join(__dirname, "..", "assets", "logo.png"),
+          modal: true,
+          width: 500,
+          height: 200,
+          title: "Settings",
+          type: "dialog",
+          minimizable: false,
+          maximizable: false,
+          resizable: false,
+          titleBarStyle: "default",
+          frame: true,
+          webPreferences: {
+            nodeIntegrationInWorker: true,
+            preload: path.join(__dirname, "settings_preload.js"),
+            nodeIntegration: true,
+          },
+        });
+        settingsWindow.center();
+        settingsWindow.show();
+        settingsWindow.loadFile(
+          path.join(__dirname, "..", "html", "settings.html"),
+        );
+        return;
+      } else {
+        saveFolder = folder;
+      }
+    }
+    const file = path.join(saveFolder, data.filename);
+    await fs.promises.writeFile(file, Buffer.from(data.data));
+    if (osuExecuteable) {
+      const folder = path.dirname(osuExecuteable.path);
+      runFile(folder, osuExecuteable.path, [file]);
+    }
+  });
 
   mainWindow.webContents.addListener("will-navigate", async (e, i) => {
+    console.log(e, i);
     if (i.endsWith("/settings")) {
       e.preventDefault();
       //TODO: open settings window
@@ -76,7 +144,7 @@ function createWindow() {
         minimizable: false,
         maximizable: false,
         resizable: false,
-        titleBarStyle: 'default',
+        titleBarStyle: "default",
         frame: true,
         webPreferences: {
           nodeIntegrationInWorker: true,
@@ -86,23 +154,32 @@ function createWindow() {
       });
       settingsWindow.center();
       settingsWindow.show();
-      settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
+      settingsWindow.loadFile(
+        path.join(__dirname, "..", "html", "settings.html"),
+      );
     } else if (i.includes("/d/")) {
       e.preventDefault();
-      const folder: string = (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
+      const folder: string =
+        (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
       if (!folder || folder == "") {
-        mainWindow.webContents.executeJavaScript(`doAlert('warn', 'You need to set your Downloads Folder first in the Settings.')`);
+        mainWindow.webContents.executeJavaScript(
+          `doAlert('warn', 'You need to set your Downloads Folder first in the Settings.')`,
+        );
         return;
       }
       const splittedUrl = i.split("/");
       const setID = splittedUrl.pop().replace(/\?noVideo/gi, " (noVideo)");
-      mainWindow.webContents.executeJavaScript(`doAlert('info', 'Downloading Set: ${setID}')`);
+      mainWindow.webContents.executeJavaScript(
+        `doAlert('info', 'Downloading Set: ${setID}')`,
+      );
       const fetchResult = await fetch(i, {
         method: "GET",
-        mode: "cors"
+        mode: "cors",
       });
       if (!fetchResult.ok) {
-        mainWindow.webContents.executeJavaScript(`doAlert('error', 'Failed to download Set: ${setID}')`);
+        mainWindow.webContents.executeJavaScript(
+          `doAlert('error', 'Failed to download Set: ${setID}')`,
+        );
         return;
       }
       const headers = fetchResult.headers;
@@ -111,44 +188,52 @@ function createWindow() {
       const fetchArrayBuffer = await fetchBlob.arrayBuffer();
       const fetchBuffer = Buffer.from(fetchArrayBuffer);
       if (fetchBlob.type != "application/octet-stream") {
-        mainWindow.webContents.executeJavaScript(`doAlert('error', 'Failed to download Set: ${setID}')`);
+        mainWindow.webContents.executeJavaScript(
+          `doAlert('error', 'Failed to download Set: ${setID}')`,
+        );
       }
 
       await fs.promises.writeFile(path.join(folder, filename), fetchBuffer);
-      mainWindow.webContents.executeJavaScript(`doAlert('success', 'Successfully downloaded Set: ${setID}')`);
+      mainWindow.webContents.executeJavaScript(
+        `doAlert('success', 'Successfully downloaded Set: ${setID}')`,
+      );
     }
   });
 
   ipcMain.handle("browse-folder", async () => {
     const openFolderDialog = await dialog.showOpenDialog(settingsWindow, {
-      properties: ['openDirectory'],
+      properties: ["openDirectory"],
     });
-    if (openFolderDialog.canceled || openFolderDialog.filePaths.length <= 0) return "";
+    if (openFolderDialog.canceled || openFolderDialog.filePaths.length <= 0) {
+      return "";
+    }
     return openFolderDialog.filePaths[0];
-  })
+  });
 
   ipcMain.handle("get-folder", async () => {
-    const folder: string = (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
-    return folder
-  })
+    const folder: string = (await configStorage.get("songs_dir") ?? { val: "" })
+      .val as string;
+    return folder;
+  });
 
   ipcMain.on("set-folder", async (_e: Event, folder: string) => {
-    configStorage.set("songs_dir", folder)
-  })
+    configStorage.set("songs_dir", folder);
+  });
 
-  mainWindow.webContents.on("did-finish-load", () => mainWindow.show())
+  mainWindow.webContents.on("did-finish-load", () => mainWindow.show());
 
   mainWindow.hide();
 
   attachTitlebarToWindow(mainWindow);
 
-  const menu = Menu.buildFromTemplate([])
+  const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL("https://osu.direct/browse");
+  mainWindow.loadURL("http://localhost:5173/browse");
 
-  if (isDev)
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (isDev) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
 app.whenReady().then(async () => {

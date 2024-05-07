@@ -1,4 +1,5 @@
-import { Titlebar, TitlebarColor } from 'custom-electron-titlebar';
+import { Titlebar, TitlebarColor } from "custom-electron-titlebar";
+import { ipcRenderer } from "electron";
 
 window.addEventListener("DOMContentLoaded", () => {
   const titlebar = new Titlebar({
@@ -8,41 +9,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   titlebar.updateTitle(`osu.direct`);
 
-  const navHeader = Array.from(document.getElementsByClassName("header-fixed") as HTMLCollectionOf<HTMLElement>);
-  const sidebar = Array.from(document.getElementsByClassName("sidepanel-container") as HTMLCollectionOf<HTMLElement>);
-  const height = Array.from(document.getElementsByClassName("cet-container") as HTMLCollectionOf<HTMLElement>);
-
-  const navHeight = height[0].style.top;
-  navHeader.forEach(nav => nav.style.top = navHeight);
-  sidebar.forEach(nav => nav.style.top = navHeight);
-
-  document.querySelector('footer').remove();
-
-  const toRemove = [2, 5, 6];
-  const navItems = Array.from(document.getElementsByClassName("nav-item") as HTMLCollectionOf<HTMLElement>);
-
-  const logoLink = navItems[0].firstElementChild;
-  logoLink.setAttribute('href', "/browse");
-
-  const objectsToRemove = [];
-  for (const index of toRemove) {
-    const navItem = navItems[index];
-    if (navItem) objectsToRemove.push(navItem);
-  }
-  objectsToRemove.forEach(object => object.remove());
-
-  const settingsItem = document.createElement("div");
-  settingsItem.classList.add("nav-item");
-  settingsItem.id = "nav-settings";
-  const settingsItemText = document.createElement("a");
-  settingsItemText.href = "/settings";
-  settingsItemText.innerHTML = "Settings";
-  settingsItem.appendChild(settingsItemText);
-
-  //document.getElementsByClassName("nav-left")[0].appendChild(settingsItem);
-  navHeader[0].appendChild(settingsItem);
-
-  //Disable User selecting text
-  document.querySelector('body').style.userSelect = "none";
-
+  window.addEventListener("download", async (e) => {
+    const customEvent = e as CustomEvent;
+    console.log(customEvent.detail);
+    await ipcRenderer.invoke("download", customEvent.detail);
+  });
 });
