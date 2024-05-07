@@ -132,8 +132,10 @@ function createWindow() {
         failed: false,
       };
     } else {
+      const mapName = data.filename.substring(0, data.filename.length - 4)
+        .split(" ").splice(1).join(" ");
       return {
-        message: "Saved %s.",
+        message: `Saved ${mapName}.`,
         failed: false,
       };
     }
