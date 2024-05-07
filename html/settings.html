@@ -1,23 +1,32 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Settings</title>
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <title>Settings</title>
-  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-  <div class="main">
-    <h3>Download directory</h3>
-    <div class="input-group">
-      <input id="download-folder" type="text" placeholder="Download directory" readonly />
-      <a id="browse-download-folder" class="button">...</a>
+  <body>
+    <div class="main">
+      <h3>osu! songs directory</h3>
+      <div class="input-group">
+        <input
+          id="download-folder"
+          type="text"
+          placeholder="Download directory"
+          readonly
+        />
+        <a id="browse-download-folder" class="button">...</a>
+      </div>
     </div>
-  </div>
-</body>
-
+  </body>
 </html>

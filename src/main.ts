@@ -15,7 +15,6 @@ import {
 import * as path from "path";
 import * as fs from "fs";
 import * as configStorage from "./configStorage";
-import { getFilenameFromHeaders } from "./requestUtil";
 import os from "os";
 import { processes } from "systeminformation";
 import { runFile } from "./execUtil";
@@ -36,6 +35,38 @@ configStorage.init();
 /* (async () => {
   await main();
 })(); */
+
+function openSettings() {
+  const point = screen.getCursorScreenPoint();
+  const { bounds } = screen.getDisplayNearestPoint(point);
+
+  settingsWindow = new BrowserWindow({
+    parent: mainWindow,
+    x: bounds.x,
+    y: bounds.y,
+    icon: path.join(__dirname, "..", "assets", "logo.png"),
+    modal: true,
+    width: 500,
+    height: 200,
+    title: "Settings",
+    type: "dialog",
+    minimizable: false,
+    maximizable: false,
+    resizable: false,
+    titleBarStyle: "default",
+    frame: true,
+    webPreferences: {
+      nodeIntegrationInWorker: true,
+      preload: path.join(__dirname, "settings_preload.js"),
+      nodeIntegration: true,
+    },
+  });
+  settingsWindow.center();
+  settingsWindow.show();
+  settingsWindow.loadFile(
+    path.join(__dirname, "..", "html", "settings.html"),
+  );
+}
 
 function createWindow() {
   const windowWidth = 1600;
@@ -82,34 +113,7 @@ function createWindow() {
         (await configStorage.get("songs_dir") ?? { val: "" })
           .val as string;
       if (!folder || folder == "") {
-        const point = screen.getCursorScreenPoint();
-        const { bounds } = screen.getDisplayNearestPoint(point);
-        settingsWindow = new BrowserWindow({
-          parent: mainWindow,
-          x: bounds.x,
-          y: bounds.y,
-          icon: path.join(__dirname, "..", "assets", "logo.png"),
-          modal: true,
-          width: 500,
-          height: 200,
-          title: "Settings",
-          type: "dialog",
-          minimizable: false,
-          maximizable: false,
-          resizable: false,
-          titleBarStyle: "default",
-          frame: true,
-          webPreferences: {
-            nodeIntegrationInWorker: true,
-            preload: path.join(__dirname, "settings_preload.js"),
-            nodeIntegration: true,
-          },
-        });
-        settingsWindow.center();
-        settingsWindow.show();
-        settingsWindow.loadFile(
-          path.join(__dirname, "..", "html", "settings.html"),
-        );
+        openSettings();
         return;
       } else {
         saveFolder = folder;
@@ -127,76 +131,7 @@ function createWindow() {
     console.log(e, i);
     if (i.endsWith("/settings")) {
       e.preventDefault();
-      //TODO: open settings window
-      const point = screen.getCursorScreenPoint();
-      const { bounds } = screen.getDisplayNearestPoint(point);
-
-      settingsWindow = new BrowserWindow({
-        parent: mainWindow,
-        x: bounds.x,
-        y: bounds.y,
-        icon: path.join(__dirname, "..", "assets", "logo.png"),
-        modal: true,
-        width: 500,
-        height: 200,
-        title: "Settings",
-        type: "dialog",
-        minimizable: false,
-        maximizable: false,
-        resizable: false,
-        titleBarStyle: "default",
-        frame: true,
-        webPreferences: {
-          nodeIntegrationInWorker: true,
-          preload: path.join(__dirname, "settings_preload.js"),
-          nodeIntegration: true,
-        },
-      });
-      settingsWindow.center();
-      settingsWindow.show();
-      settingsWindow.loadFile(
-        path.join(__dirname, "..", "html", "settings.html"),
-      );
-    } else if (i.includes("/d/")) {
-      e.preventDefault();
-      const folder: string =
-        (await configStorage.get("songs_dir") ?? { val: "" }).val as string;
-      if (!folder || folder == "") {
-        mainWindow.webContents.executeJavaScript(
-          `doAlert('warn', 'You need to set your Downloads Folder first in the Settings.')`,
-        );
-        return;
-      }
-      const splittedUrl = i.split("/");
-      const setID = splittedUrl.pop().replace(/\?noVideo/gi, " (noVideo)");
-      mainWindow.webContents.executeJavaScript(
-        `doAlert('info', 'Downloading Set: ${setID}')`,
-      );
-      const fetchResult = await fetch(i, {
-        method: "GET",
-        mode: "cors",
-      });
-      if (!fetchResult.ok) {
-        mainWindow.webContents.executeJavaScript(
-          `doAlert('error', 'Failed to download Set: ${setID}')`,
-        );
-        return;
-      }
-      const headers = fetchResult.headers;
-      const filename = getFilenameFromHeaders(headers);
-      const fetchBlob = await fetchResult.blob();
-      const fetchArrayBuffer = await fetchBlob.arrayBuffer();
-      const fetchBuffer = Buffer.from(fetchArrayBuffer);
-      if (fetchBlob.type != "application/octet-stream") {
-        mainWindow.webContents.executeJavaScript(
-          `doAlert('error', 'Failed to download Set: ${setID}')`,
-        );
-      }
-
-      await fs.promises.writeFile(path.join(folder, filename), fetchBuffer);
-      mainWindow.webContents.executeJavaScript(
-        `doAlert('success', 'Successfully downloaded Set: ${setID}')`,
-      );
+      openSettings();
     }
   });
 
