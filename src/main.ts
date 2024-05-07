@@ -142,7 +142,6 @@ function createWindow() {
   });
 
   mainWindow.webContents.addListener("will-navigate", async (e, i) => {
-    console.log(e, i);
     if (i.endsWith("/settings")) {
       e.preventDefault();
       openSettings();
