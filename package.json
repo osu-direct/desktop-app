@@ -83,6 +83,7 @@
     "better-sqlite3": "^8.6.0",
     "custom-electron-titlebar": "^4.2.7",
     "systeminformation": "^5.22.8",
+    "volume_supervisor": "^1.0.1",
     "ws": "^8.13.0"
   }
 }

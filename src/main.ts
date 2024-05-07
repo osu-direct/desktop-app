@@ -114,7 +114,10 @@ function createWindow() {
           .val as string;
       if (!folder || folder == "") {
         openSettings();
-        return;
+        return {
+          message: "Please set your osu! songs directory!",
+          failed: true,
+        };
       } else {
         saveFolder = folder;
       }
@@ -124,6 +127,15 @@ function createWindow() {
     if (osuExecuteable) {
       const folder = path.dirname(osuExecuteable.path);
       runFile(folder, osuExecuteable.path, [file]);
+      return {
+        message: "Importing into osu!...",
+        failed: false,
+      };
+    } else {
+      return {
+        message: "Saved %s.",
+        failed: false,
+      };
     }
   });
 

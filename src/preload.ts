@@ -12,6 +12,11 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("download", async (e) => {
     const customEvent = e as CustomEvent;
     console.log(customEvent.detail);
-    await ipcRenderer.invoke("download", customEvent.detail);
+    const result = await ipcRenderer.invoke("download", customEvent.detail);
+    window.dispatchEvent(
+      new CustomEvent("download-complete", {
+        detail: result,
+      }),
+    );
   });
 });
