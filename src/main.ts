@@ -178,7 +178,7 @@ function createWindow() {
   const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL("http://localhost:5173/browse");
+  mainWindow.loadURL("https://osu.direct/browse");
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
