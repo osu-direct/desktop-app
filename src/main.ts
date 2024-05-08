@@ -18,6 +18,7 @@ import * as configStorage from "./configStorage";
 import os from "os";
 import { processes } from "systeminformation";
 import { runFile } from "./execUtil";
+import { toggleOsuSound } from "./audioManager/osuAudioManager";
 /* import { main, shutdown } from "./proxy"; */
 
 app.commandLine.appendSwitch("no-proxy-server");
@@ -102,6 +103,11 @@ function createWindow() {
 
   mainWindow.webContents.setUserAgent("osu.direct");
 
+  ipcMain.handle("audio-toggle", async (_e, mute) => {
+    console.log("osu sound toggle");
+    await toggleOsuSound(mute);
+  });
+
   ipcMain.handle("download", async (_e, data) => {
     const tempFolder = path.join(os.tmpdir());
     const osuExecuteable = (await processes()).list.find((process) =>
@@ -109,9 +115,8 @@ function createWindow() {
     );
     let saveFolder = tempFolder;
     if (!osuExecuteable) {
-      const folder: string =
-        (await configStorage.get("songs_dir") ?? { val: "" })
-          .val as string;
+      const folder: string = (configStorage.get("songs_dir") ?? { val: "" })
+        .val as string;
       if (!folder || folder == "") {
         openSettings();
         return {
@@ -159,13 +164,23 @@ function createWindow() {
   });
 
   ipcMain.handle("get-folder", async () => {
-    const folder: string = (await configStorage.get("songs_dir") ?? { val: "" })
+    const folder: string = (configStorage.get("songs_dir") ?? { val: "" })
       .val as string;
     return folder;
   });
 
+  ipcMain.handle("get-osu-mute", async () => {
+    const osuMute: string = (configStorage.get("osu_mute") ?? { val: "true" })
+      .val as string;
+    return osuMute == "true";
+  });
+
   ipcMain.on("set-folder", async (_e: Event, folder: string) => {
     configStorage.set("songs_dir", folder);
+  });
+
+  ipcMain.handle("set-osu-mute", async (_e: Event, mute: string) => {
+    configStorage.set("mute_osu", mute);
   });
 
   mainWindow.webContents.on("did-finish-load", () => mainWindow.show());
@@ -192,8 +207,9 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on("window-all-closed", () => {
+app.on("window-all-closed", async () => {
   if (process.platform !== "darwin") {
+    await toggleOsuSound(false);
     app.quit();
   }
 });
