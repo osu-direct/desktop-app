@@ -4,12 +4,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   const inputField = document.getElementById(
     "download-folder",
   ) as HTMLInputElement;
-  const osuMute = document.getElementById(
-    "mute-osu",
-  ) as HTMLInputElement;
   const folder = await ipcRenderer.invoke("get-folder");
   inputField.value = folder;
-  osuMute.checked = await ipcRenderer.invoke("get-osu-mute");
 
   document.getElementById("browse-download-folder").onclick =
     async function () {
@@ -19,11 +15,4 @@ window.addEventListener("DOMContentLoaded", async () => {
         ipcRenderer.send("set-folder", selectedFolder);
       }
     };
-
-  osuMute.onchange = async function () {
-    await ipcRenderer.invoke(
-      "set-osu-mute",
-      osuMute.checked ? "true" : "false",
-    );
-  };
 });

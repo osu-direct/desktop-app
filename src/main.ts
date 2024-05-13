@@ -18,10 +18,9 @@ import * as configStorage from "./configStorage";
 import os from "os";
 import { processes } from "systeminformation";
 import { runFile } from "./execUtil";
-import { toggleOsuSound } from "./audioManager/osuAudioManager";
-/* import { main, shutdown } from "./proxy"; */
+import { version } from "./appInfo";
 
-app.commandLine.appendSwitch("no-proxy-server");
+const gotTheLock = app.requestSingleInstanceLock();
 
 const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
@@ -30,12 +29,6 @@ let settingsWindow: BrowserWindow;
 
 setupTitlebar();
 configStorage.init();
-
-/* app.on("before-quit", () => shutdown()); */
-
-/* (async () => {
-  await main();
-})(); */
 
 function openSettings() {
   const point = screen.getCursorScreenPoint();
@@ -101,12 +94,7 @@ function createWindow() {
   mainWindow.setSize(windowWidth, windowHeight);
   mainWindow.center();
 
-  mainWindow.webContents.setUserAgent("osu.direct");
-
-  ipcMain.handle("audio-toggle", async (_e, mute) => {
-    console.log("osu sound toggle");
-    await toggleOsuSound(mute);
-  });
+  mainWindow.webContents.setUserAgent("osu.direct " + version);
 
   ipcMain.handle("download", async (_e, data) => {
     const tempFolder = path.join(os.tmpdir());
@@ -131,9 +119,11 @@ function createWindow() {
     await fs.promises.writeFile(file, Buffer.from(data.data));
     if (osuExecuteable) {
       const folder = path.dirname(osuExecuteable.path);
-      runFile(folder, osuExecuteable.path, [file]);
+      const imported = await runFile(folder, osuExecuteable.path, [file]);
       return {
-        message: "Importing into osu!...",
+        message: imported
+          ? "Successfully imported into osu!"
+          : "Failed to import into osu!",
         failed: false,
       };
     } else {
@@ -198,18 +188,30 @@ function createWindow() {
     mainWindow.webContents.openDevTools({ mode: "detach" });
   }
 }
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on(
+    "second-instance",
+    () => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+      }
+    },
+  );
 
-app.whenReady().then(async () => {
-  createWindow();
+  app.whenReady().then(async () => {
+    createWindow();
 
-  app.on("activate", function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    app.on("activate", function () {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
   });
-});
 
-app.on("window-all-closed", async () => {
-  if (process.platform !== "darwin") {
-    await toggleOsuSound(false);
-    app.quit();
-  }
-});
+  app.on("window-all-closed", async () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
+}

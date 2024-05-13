@@ -46,13 +46,9 @@
     ]
   },
   "scripts": {
-    "start": "tsx start.ts",
     "rebuild": "electron-rebuild",
-    "compile": "tsx compile.ts",
-    "linux:start": "npm run build && cp -r src/mitm/scripts/ dist/mitm/ && electron ./dist/main.js",
-    "linux:compile": "npm run build && cp -r src/mitm/scripts/ dist/mitm/ && electron-builder",
-    "win:start": "npm run build && mkdir dist\\mitm\\scripts\\ > nul && xcopy /E /I src\\audioManager\\bin dist\\audioManager\\bin\\ > nul && xcopy /E /I src\\mitm\\scripts dist\\mitm\\scripts\\ > nul && electron ./dist/main.js",
-    "win:compile": "npm run build && mkdir dist\\mitm\\scripts\\ > nul && xcopy /E /I src\\mitm\\scripts dist\\mitm\\scripts\\ > nul && electron-builder",
+    "start": "npm run build && electron ./dist/main.js",
+    "compile": "npm run build && electron-builder",
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src"

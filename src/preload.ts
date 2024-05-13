@@ -1,5 +1,6 @@
 import { Titlebar, TitlebarColor } from "custom-electron-titlebar";
 import { ipcRenderer } from "electron";
+import { version } from "./appInfo";
 
 window.addEventListener("DOMContentLoaded", () => {
   const titlebar = new Titlebar({
@@ -7,17 +8,7 @@ window.addEventListener("DOMContentLoaded", () => {
     itemBackgroundColor: TitlebarColor.fromHex("#121212"),
     enableMnemonics: false,
   });
-  titlebar.updateTitle(`osu.direct`);
-
-  window.addEventListener("audio-play", async () => {
-    console.log("playing audio");
-    await ipcRenderer.invoke("audio-toggle", true);
-  });
-
-  window.addEventListener("audio-stop", async () => {
-    console.log("stopped audio");
-    await ipcRenderer.invoke("audio-toggle", false);
-  });
+  titlebar.updateTitle(`osu.direct ${version}`);
 
   window.addEventListener("download", async (e) => {
     const customEvent = e as CustomEvent;
