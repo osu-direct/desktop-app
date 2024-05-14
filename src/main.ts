@@ -63,8 +63,8 @@ function openSettings() {
 }
 
 function createWindow() {
-  const windowWidth = 1600;
-  const windowHeight = 900;
+  const windowWidth = 1420;
+  const windowHeight = 830;
 
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
@@ -207,7 +207,7 @@ function createWindow() {
   const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL("http://localhost:5173/browse");
+  mainWindow.loadURL("https://osu.direct/browse");
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
