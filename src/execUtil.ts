@@ -13,3 +13,18 @@ export const runFile = (
     });
   });
 };
+
+export const runFileDetached = (
+  folder: string,
+  file: string,
+  args?: string[],
+): Promise<boolean> => {
+  return new Promise<boolean>((res) => {
+    childProcess.spawn(file, args, {
+      cwd: folder,
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+    res(true);
+  });
+};

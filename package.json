@@ -1,6 +1,6 @@
 {
   "name": "osudirect-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Desktop app for osu.direct",
   "main": "dist/main.js",
   "type": "commonjs",

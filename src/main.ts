@@ -17,7 +17,7 @@ import * as fs from "fs";
 import * as configStorage from "./configStorage";
 import os from "os";
 import { processes } from "systeminformation";
-import { runFile } from "./execUtil";
+import { runFile, runFileDetached } from "./execUtil";
 import { version } from "./appInfo";
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -143,6 +143,31 @@ function createWindow() {
     }
   });
 
+  ipcMain.handle("update-client", async () => {
+    const tempFolder = os.tmpdir();
+    const osuDirectUpdateFile = path.join(
+      tempFolder,
+      "osu.direct-desktop-update.exe",
+    );
+    const downloadRequest = await fetch(
+      "https://osu.direct/assets/osudirect-desktop.exe",
+    );
+    if (!downloadRequest.ok) {
+      return {
+        message: "Failed to download update.",
+        failed: true,
+      };
+    }
+    const fileArray = await downloadRequest.arrayBuffer();
+    await fs.promises.writeFile(osuDirectUpdateFile, Buffer.from(fileArray));
+    await runFileDetached(tempFolder, osuDirectUpdateFile);
+    app.quit();
+    return {
+      message: "Successfully downloaded update.",
+      failed: false,
+    };
+  });
+
   ipcMain.handle("browse-folder", async () => {
     const openFolderDialog = await dialog.showOpenDialog(settingsWindow, {
       properties: ["openDirectory"],
@@ -182,7 +207,7 @@ function createWindow() {
   const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL("https://osu.direct/browse");
+  mainWindow.loadURL("http://localhost:5173/browse");
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });

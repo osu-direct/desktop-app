@@ -10,6 +10,15 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   titlebar.updateTitle(`osu.direct ${version}`);
 
+  window.addEventListener("update-client", async () => {
+    const result = await ipcRenderer.invoke("update-client");
+    if (result.failed) {
+      window.dispatchEvent(
+        new CustomEvent("update-failed"),
+      );
+    }
+  });
+
   window.addEventListener("download", async (e) => {
     const customEvent = e as CustomEvent;
     const result = await ipcRenderer.invoke("download", customEvent.detail);
