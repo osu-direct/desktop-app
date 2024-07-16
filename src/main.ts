@@ -151,10 +151,17 @@ function createWindow() {
     );
     const downloadRequest = await fetch(
       "https://osu.direct/assets/osudirect-desktop.exe",
+      {
+        method: "GET",
+        headers: {
+          "User-Agent": "osu.direct " + version,
+        },
+      },
     );
     if (!downloadRequest.ok) {
       return {
-        message: "Failed to download update.",
+        message:
+          "Failed to download update, please download manually from website.",
         failed: true,
       };
     }
@@ -207,7 +214,9 @@ function createWindow() {
   const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL("https://osu.direct/browse");
+  mainWindow.loadURL(
+    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse",
+  );
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });

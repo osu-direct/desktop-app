@@ -4,8 +4,8 @@ import { version } from "./appInfo";
 
 window.addEventListener("DOMContentLoaded", () => {
   const titlebar = new Titlebar({
-    backgroundColor: TitlebarColor.fromHex("#1e1e2e"),
-    itemBackgroundColor: TitlebarColor.fromHex("#121212"),
+    backgroundColor: TitlebarColor.fromHex("#050616"),
+    itemBackgroundColor: TitlebarColor.fromHex("#050616"),
     enableMnemonics: false,
   });
   titlebar.updateTitle(`osu.direct ${version}`);
