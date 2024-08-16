@@ -57,14 +57,12 @@ function openSettings() {
   });
   settingsWindow.center();
   settingsWindow.show();
-  settingsWindow.loadFile(
-    path.join(__dirname, "..", "html", "settings.html"),
-  );
+  settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
 }
 
 function createWindow() {
-  const windowWidth = 1420;
-  const windowHeight = 830;
+  const windowWidth = 1700;
+  const windowHeight = 1035;
 
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
@@ -96,45 +94,51 @@ function createWindow() {
 
   mainWindow.webContents.setUserAgent("osu.direct " + version);
 
-  ipcMain.handle("download", async (_e, data) => {
-    const tempFolder = path.join(os.tmpdir());
-    const osuExecuteable = (await processes()).list.find((process) =>
-      process.name == "osu!.exe"
-    );
-    let saveFolder = tempFolder;
-    if (!osuExecuteable) {
-      const folder: string = (configStorage.get("songs_dir") ?? { val: "" })
-        .val as string;
-      if (!folder || folder == "") {
-        openSettings();
+  ipcMain.handle(
+    "download",
+    async (_e, data: { filename: string; data: ArrayBuffer }) => {
+      const tempFolder = path.join(os.tmpdir());
+      const osuExecuteable = (await processes()).list.find(
+        (process) => process.name == "osu!.exe"
+      );
+      let saveFolder = tempFolder;
+      if (!osuExecuteable) {
+        const folder: string = (configStorage.get("songs_dir") ?? { val: "" })
+          .val as string;
+        if (!folder || folder == "") {
+          openSettings();
+          return {
+            message: "Please set your osu! songs directory!",
+            failed: true,
+          };
+        } else {
+          saveFolder = folder;
+        }
+      }
+      const file = path.join(saveFolder, data.filename);
+      await fs.promises.writeFile(file, new Uint8Array(data.data));
+      if (osuExecuteable) {
+        const folder = path.dirname(osuExecuteable.path);
+        const imported = await runFile(folder, osuExecuteable.path, [file]);
         return {
-          message: "Please set your osu! songs directory!",
-          failed: true,
+          message: imported
+            ? "Successfully imported into osu!"
+            : "Failed to import into osu!",
+          failed: false,
         };
       } else {
-        saveFolder = folder;
+        const mapName = data.filename
+          .substring(0, data.filename.length - 4)
+          .split(" ")
+          .splice(1)
+          .join(" ");
+        return {
+          message: `Saved ${mapName}.`,
+          failed: false,
+        };
       }
     }
-    const file = path.join(saveFolder, data.filename);
-    await fs.promises.writeFile(file, Buffer.from(data.data));
-    if (osuExecuteable) {
-      const folder = path.dirname(osuExecuteable.path);
-      const imported = await runFile(folder, osuExecuteable.path, [file]);
-      return {
-        message: imported
-          ? "Successfully imported into osu!"
-          : "Failed to import into osu!",
-        failed: false,
-      };
-    } else {
-      const mapName = data.filename.substring(0, data.filename.length - 4)
-        .split(" ").splice(1).join(" ");
-      return {
-        message: `Saved ${mapName}.`,
-        failed: false,
-      };
-    }
-  });
+  );
 
   mainWindow.webContents.addListener("will-navigate", async (e, i) => {
     if (i.endsWith("/settings")) {
@@ -147,17 +151,14 @@ function createWindow() {
     const tempFolder = os.tmpdir();
     const osuDirectUpdateFile = path.join(
       tempFolder,
-      "osu.direct-desktop-update.exe",
+      "osu.direct-desktop-update.exe"
     );
-    const downloadRequest = await fetch(
-      "https://osu.direct/assets/osudirect-desktop.exe",
-      {
-        method: "GET",
-        headers: {
-          "User-Agent": "osu.direct " + version,
-        },
+    const downloadRequest = await fetch("https://osu.direct/download/stable", {
+      method: "GET",
+      headers: {
+        "User-Agent": "osu.direct " + version,
       },
-    );
+    });
     if (!downloadRequest.ok) {
       return {
         message:
@@ -166,7 +167,7 @@ function createWindow() {
       };
     }
     const fileArray = await downloadRequest.arrayBuffer();
-    await fs.promises.writeFile(osuDirectUpdateFile, Buffer.from(fileArray));
+    await fs.promises.writeFile(osuDirectUpdateFile, new Uint8Array(fileArray));
     await runFileDetached(tempFolder, osuDirectUpdateFile);
     app.quit();
     return {
@@ -215,7 +216,7 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 
   mainWindow.loadURL(
-    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse",
+    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse"
   );
 
   if (isDev) {
@@ -225,15 +226,12 @@ function createWindow() {
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on(
-    "second-instance",
-    () => {
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.focus();
-      }
-    },
-  );
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 
   app.whenReady().then(async () => {
     createWindow();
