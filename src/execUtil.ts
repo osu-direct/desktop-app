@@ -20,11 +20,18 @@ export const runFileDetached = (
   args?: string[],
 ): Promise<boolean> => {
   return new Promise<boolean>((res) => {
-    childProcess.spawn(file, args, {
+    const process = childProcess.spawn(file, args, {
       cwd: folder,
       detached: true,
       stdio: "ignore",
-    }).unref();
+    });
+    process.stdout.on("data", (yes) => {
+      console.log(yes);
+    });
+    process.on("exit", (code) => {
+      console.log("exited with code", code);
+    });
+    process.unref();
     res(true);
   });
 };

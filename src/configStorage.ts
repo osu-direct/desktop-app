@@ -1,4 +1,5 @@
 import { dbFile } from "./glob";
+import { Setting } from "./types";
 
 export const init = (): void => {
   dbFile.exec(
@@ -14,9 +15,16 @@ export const set = (key: string, value: string): void => {
 
 export const get = (
   key: string,
-): Record<string, string | number> | undefined => {
+): Setting | undefined => {
   const result = dbFile.prepare(
     "SELECT configKey key, configValue val FROM config WHERE key = ?",
   ).get(key);
-  return result as Record<string, string | number> ?? undefined;
+  return result as Setting ?? undefined;
+};
+
+export const getAll = (): Setting[] | undefined => {
+  const result = dbFile.prepare(
+    "SELECT configKey key, configValue val FROM config",
+  ).all();
+  return result as Setting[] ?? undefined;
 };

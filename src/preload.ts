@@ -2,13 +2,23 @@ import { Titlebar, TitlebarColor } from "custom-electron-titlebar";
 import { ipcRenderer } from "electron";
 import { version } from "./appInfo";
 
-window.addEventListener("DOMContentLoaded", () => {
-  const titlebar = new Titlebar({
-    backgroundColor: TitlebarColor.fromHex("#050616"),
-    itemBackgroundColor: TitlebarColor.fromHex("#050616"),
-    enableMnemonics: false,
-  });
-  titlebar.updateTitle(`osu.direct ${version}`);
+let titleBar: Titlebar | undefined;
+let inited = false;
+
+window.addEventListener("load", () => {
+  if (inited) return;
+  inited = true;
+
+  if (!titleBar) {
+    titleBar = new Titlebar({
+      backgroundColor: TitlebarColor.fromHex("#050616"),
+      itemBackgroundColor: TitlebarColor.fromHex("#050616"),
+      enableMnemonics: false,
+    });
+    titleBar.updateTitle(`osu.direct ${version}`);
+  }
+
+  /* let previewPlaying = false; */
 
   window.addEventListener("update-client", async () => {
     const result = await ipcRenderer.invoke("update-client");
@@ -28,4 +38,16 @@ window.addEventListener("DOMContentLoaded", () => {
       }),
     );
   });
+
+  /*   window.addEventListener("preview-play", async () => {
+    if (previewPlaying) return;
+    previewPlaying = true;
+    ipcRenderer.send("preview-play");
+  });
+
+  window.addEventListener("preview-stop", async () => {
+    if (!previewPlaying) return;
+    previewPlaying = false;
+    ipcRenderer.send("preview-stop");
+  }); */
 });

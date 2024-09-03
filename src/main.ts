@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   Event,
   ipcMain,
@@ -19,6 +20,7 @@ import os from "os";
 import { processes } from "systeminformation";
 import { runFile, runFileDetached } from "./execUtil";
 import { version } from "./appInfo";
+import { muteApp, unmuteApp, VolPath } from "./volumeUtil";
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -58,10 +60,15 @@ function openSettings() {
   settingsWindow.center();
   settingsWindow.show();
   settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
+  if (isDev) {
+    settingsWindow.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
 function createWindow() {
-  const windowWidth = 1700;
+  clipboard.writeText(VolPath, "clipboard");
+
+  const windowWidth = 1740;
   const windowHeight = 1035;
 
   const point = screen.getCursorScreenPoint();
@@ -99,7 +106,7 @@ function createWindow() {
     async (_e, data: { filename: string; data: ArrayBuffer }) => {
       const tempFolder = path.join(os.tmpdir());
       const osuExecuteable = (await processes()).list.find(
-        (process) => process.name == "osu!.exe"
+        (process) => process.name == "osu!.exe",
       );
       let saveFolder = tempFolder;
       if (!osuExecuteable) {
@@ -137,7 +144,7 @@ function createWindow() {
           failed: false,
         };
       }
-    }
+    },
   );
 
   mainWindow.webContents.addListener("will-navigate", async (e, i) => {
@@ -151,7 +158,7 @@ function createWindow() {
     const tempFolder = os.tmpdir();
     const osuDirectUpdateFile = path.join(
       tempFolder,
-      "osu.direct-desktop-update.exe"
+      "osu.direct-desktop-update.exe",
     );
     const downloadRequest = await fetch("https://osu.direct/download/stable", {
       method: "GET",
@@ -186,24 +193,32 @@ function createWindow() {
     return openFolderDialog.filePaths[0];
   });
 
-  ipcMain.handle("get-folder", async () => {
-    const folder: string = (configStorage.get("songs_dir") ?? { val: "" })
-      .val as string;
-    return folder;
-  });
-
-  ipcMain.handle("get-osu-mute", async () => {
-    const osuMute: string = (configStorage.get("osu_mute") ?? { val: "true" })
-      .val as string;
-    return osuMute == "true";
+  ipcMain.handle("get-settings", async () => {
+    const allSettings = configStorage.getAll();
+    return allSettings;
   });
 
   ipcMain.on("set-folder", async (_e: Event, folder: string) => {
     configStorage.set("songs_dir", folder);
   });
 
-  ipcMain.handle("set-osu-mute", async (_e: Event, mute: string) => {
+  ipcMain.on("set-osu-mute", async (_e: Event, mute: string) => {
+    console.log("setting mute_osu to", mute);
     configStorage.set("mute_osu", mute);
+  });
+
+  ipcMain.on("preview-play", async () => {
+    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
+    if (muteOsuOnPreview) {
+      muteApp("osu!");
+    }
+  });
+
+  ipcMain.on("preview-stop", async () => {
+    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
+    if (muteOsuOnPreview) {
+      unmuteApp("osu!");
+    }
   });
 
   mainWindow.webContents.on("did-finish-load", () => mainWindow.show());
@@ -216,12 +231,10 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 
   mainWindow.loadURL(
-    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse"
+    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse",
   );
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools({ mode: "detach" });
-  }
+  mainWindow.webContents.openDevTools({ mode: "detach" });
 }
 if (!gotTheLock) {
   app.quit();
