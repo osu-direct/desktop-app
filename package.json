@@ -43,10 +43,12 @@
       "node_modules",
       "!src/**/*",
       "!test/**/*",
-      "!tsconfig.json"
+      "!tsconfig.json",
+      "!resources/*",
+      "!resources/**/*"
     ],
     "extraFiles": [
-      "assets/SetVol.exe"
+      "resources/SetVol.exe"
     ]
   },
   "scripts": {

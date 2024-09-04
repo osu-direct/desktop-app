@@ -231,7 +231,7 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 
   mainWindow.loadURL(
-    isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse",
+    "https://osu.direct/browse",
   );
 
   if (isDev) {

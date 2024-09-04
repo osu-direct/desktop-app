@@ -18,7 +18,7 @@ window.addEventListener("load", () => {
     titleBar.updateTitle(`osu.direct ${version}`);
   }
 
-  /* let previewPlaying = false; */
+  let previewPlaying = false;
 
   window.addEventListener("update-client", async () => {
     const result = await ipcRenderer.invoke("update-client");
@@ -39,7 +39,7 @@ window.addEventListener("load", () => {
     );
   });
 
-  /*   window.addEventListener("preview-play", async () => {
+  window.addEventListener("preview-play", async () => {
     if (previewPlaying) return;
     previewPlaying = true;
     ipcRenderer.send("preview-play");
@@ -49,5 +49,5 @@ window.addEventListener("load", () => {
     if (!previewPlaying) return;
     previewPlaying = false;
     ipcRenderer.send("preview-stop");
-  }); */
+  });
 });

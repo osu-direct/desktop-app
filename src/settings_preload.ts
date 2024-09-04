@@ -6,18 +6,18 @@ window.addEventListener("load", async () => {
     "download-folder",
   ) as HTMLInputElement;
 
-  /*   const mutePreviewCheckbox = document.getElementById(
+  const mutePreviewCheckbox = document.getElementById(
     "mute-preview",
-  ) as HTMLInputElement; */
+  ) as HTMLInputElement;
 
   const settings: Setting[] = await ipcRenderer.invoke("get-settings");
 
   const songsDir = settings.find((setting) => setting.key === "songs_dir");
   songsDirInputField.value = songsDir?.val as string ?? "";
 
-  /*   const mutePreview = settings.find((setting) => setting.key === "mute_osu");
+  const mutePreview = settings.find((setting) => setting.key === "mute_osu");
   mutePreviewCheckbox.checked =
-    (mutePreview?.val as string ?? "true") === "true"; */
+    (mutePreview?.val as string ?? "true") === "true";
 
   document.getElementById("browse-download-folder").onclick =
     async function () {
@@ -28,8 +28,8 @@ window.addEventListener("load", async () => {
       }
     };
 
-  /*   mutePreviewCheckbox.onchange = async function () {
+  mutePreviewCheckbox.onchange = async function () {
     console.log("mute", mutePreviewCheckbox.checked);
     ipcRenderer.send("set-osu-mute", `${mutePreviewCheckbox.checked}`);
-  }; */
+  };
 });

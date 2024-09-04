@@ -8,14 +8,11 @@ export const VolPath = isDev
   ? path.join(
     app.getAppPath(),
     "..",
-    "assets",
+    "resources",
     "SetVol.exe",
   )
   : path.join(
-    app.getAppPath(),
-    "..",
-    "..",
-    "assets",
+    path.dirname(app.getAppPath()),
     "SetVol.exe",
   );
 
