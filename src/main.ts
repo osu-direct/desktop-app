@@ -234,7 +234,9 @@ function createWindow() {
     isDev ? "http://localhost:5173/browse" : "https://osu.direct/browse",
   );
 
-  mainWindow.webContents.openDevTools({ mode: "detach" });
+  if (isDev) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
 }
 if (!gotTheLock) {
   app.quit();
