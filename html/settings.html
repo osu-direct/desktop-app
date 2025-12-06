@@ -1,38 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Settings</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
 
-  <body>
-    <div class="main">
-      <h3>osu! songs directory</h3>
-      <div class="input-group">
-        <input
-          id="download-folder"
-          type="text"
-          placeholder="Download directory"
-          readonly
-        />
-        <a id="browse-download-folder" class="button">...</a>
-      </div>
-      <div class="checkbox">
-        <input type="checkbox" id="mute-preview" />
-        <label class="checkbox-text" for="mute-preview"
-          >Mute osu! when preview is playing</label
-        >
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings</title>
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="main">
+    <h3>osu! songs directory</h3>
+    <div class="input-group">
+      <input id="download-folder" type="text" placeholder="Download directory" readonly />
+      <a id="browse-download-folder" class="button">...</a>
     </div>
-  </body>
+    <div class="checkbox">
+      <input type="checkbox" id="mute-preview" />
+      <label for="mute-preview">
+        <span class="checkbox-box"></span>
+        <span class="checkbox-text">
+          Mute osu! when preview is playing
+        </span>
+      </label>
+    </div>
+  </div>
+</body>
+
 </html>
