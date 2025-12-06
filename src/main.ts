@@ -175,7 +175,7 @@ function createWindow() {
     }
     const fileArray = await downloadRequest.arrayBuffer();
     await fs.promises.writeFile(osuDirectUpdateFile, new Uint8Array(fileArray));
-    await runFileDetached(tempFolder, osuDirectUpdateFile);
+    runFileDetached(tempFolder, osuDirectUpdateFile);
     app.quit();
     return {
       message: "Successfully downloaded update.",
