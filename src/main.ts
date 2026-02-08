@@ -84,7 +84,7 @@ function toggleOverlayWindow() {
     }
     const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
     if (muteOsuOnPreview) {
-      muteApp("osu!");
+      unmuteApp("osu!");
     }
     globalShortcut.unregister("esc");
     return;
@@ -167,7 +167,7 @@ function toggleOverlayWindow() {
     }
     const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
     if (muteOsuOnPreview) {
-      muteApp("osu!");
+      unmuteApp("osu!");
     }
     globalShortcut.unregister("esc");
   });
