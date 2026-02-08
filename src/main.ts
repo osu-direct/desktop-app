@@ -32,6 +32,9 @@ let settingsWindow: BrowserWindow;
 let overlayWindow: BrowserWindow | undefined;
 let osuWindow: Window | undefined;
 
+// used to preserve the last filter/query state after closing the overlay
+let lastOverlayURL = "https://osu.direct/browse";
+
 setupTitlebar();
 configStorage.init();
 
@@ -74,6 +77,8 @@ function toggleOverlayWindow() {
     .getWindows()
     .find((window) => window.getTitle().startsWith("osu!"));
   if (overlayWindow) {
+    lastOverlayURL = overlayWindow.webContents.getURL();
+
     mainWindow.showInactive();
     overlayWindow.close();
     overlayWindow = undefined;
@@ -144,7 +149,7 @@ function toggleOverlayWindow() {
   overlayWindow.setMenu(null);
 
   overlayWindow.webContents.setUserAgent("osu.direct " + version);
-  overlayWindow.loadURL("https://osu.direct/browse");
+  overlayWindow.loadURL(lastOverlayURL);
 
   overlayWindow.webContents.addListener("will-navigate", async (e, i) => {
     if (i.endsWith("/settings")) {
@@ -156,6 +161,7 @@ function toggleOverlayWindow() {
   overlayWindow.webContents.on("did-finish-load", () => overlayWindow?.show());
 
   globalShortcut.register("esc", () => {
+    if (overlayWindow) lastOverlayURL = overlayWindow.webContents.getURL();
     mainWindow.showInactive();
     overlayWindow?.close();
     overlayWindow = undefined;
