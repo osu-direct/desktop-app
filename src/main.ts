@@ -134,8 +134,11 @@ function toggleOverlayWindow() {
     },
   });
 
-  overlayWindow.setAlwaysOnTop(true, "screen-saver", 9999);
-  overlayWindow.setVisibleOnAllWorkspaces(true);
+  if (isOsuFullscreen) osuWindow.minimize();
+
+  overlayWindow.setAlwaysOnTop(true, "screen-saver", 1);
+  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  overlayWindow.setMenu(null);
 
   overlayWindow.webContents.setUserAgent("osu.direct " + version);
   overlayWindow.loadURL("https://osu.direct/browse");
@@ -223,6 +226,10 @@ function createWindow() {
       if (osuExecuteable) {
         const folder = path.dirname(osuExecuteable.path);
         const imported = await runFile(folder, osuExecuteable.path, [file]);
+        if (imported && osuWindow && overlayWindow) {
+          await new Promise((res) => setTimeout(res, 500));
+          overlayWindow.focus();
+        }
         return {
           message: imported
             ? "Successfully imported into osu!"
