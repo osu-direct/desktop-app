@@ -142,8 +142,6 @@ function toggleOverlayWindow() {
     },
   });
 
-  if (isOsuFullscreen) osuWindow.minimize();
-
   overlayWindow.setAlwaysOnTop(true, "screen-saver", 1);
   overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   overlayWindow.setMenu(null);
@@ -158,7 +156,10 @@ function toggleOverlayWindow() {
     }
   });
 
-  overlayWindow.webContents.on("did-finish-load", () => overlayWindow?.show());
+  overlayWindow.webContents.on("did-finish-load", () => {
+    overlayWindow?.show();
+    if (isOsuFullscreen && osuWindow) osuWindow.minimize();
+  });
 
   globalShortcut.register("esc", () => {
     if (overlayWindow) lastOverlayURL = overlayWindow.webContents.getURL();
