@@ -1,13 +1,13 @@
 import {
   app,
   BrowserWindow,
-  clipboard,
   dialog,
   Event,
   ipcMain,
   Menu,
   screen,
   shell,
+  globalShortcut,
 } from "electron";
 import {
   attachTitlebarToWindow,
@@ -20,7 +20,8 @@ import os from "os";
 import { processes } from "systeminformation";
 import { runFile, runFileDetached } from "./execUtil";
 import { version } from "./appInfo";
-import { muteApp, unmuteApp, VolPath } from "./volumeUtil";
+import { muteApp, unmuteApp } from "./volumeUtil";
+import { getWindowGeometryByExe } from "./windowUtil";
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -28,6 +29,7 @@ const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
+let overlayWindow: BrowserWindow | undefined;
 
 setupTitlebar();
 configStorage.init();
@@ -36,27 +38,29 @@ function openSettings() {
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
 
-  settingsWindow = new BrowserWindow({
-    parent: mainWindow,
-    x: bounds.x,
-    y: bounds.y,
-    icon: path.join(__dirname, "..", "assets", "logo.png"),
-    modal: true,
-    width: 500,
-    height: 200,
-    title: "Settings",
-    type: "dialog",
-    minimizable: false,
-    maximizable: false,
-    resizable: false,
-    titleBarStyle: "default",
-    frame: true,
-    webPreferences: {
-      nodeIntegrationInWorker: true,
-      preload: path.join(__dirname, "settings_preload.js"),
-      nodeIntegration: true,
-    },
-  });
+  if (!settingsWindow) {
+    settingsWindow = new BrowserWindow({
+      parent: mainWindow,
+      x: bounds.x,
+      y: bounds.y,
+      icon: path.join(__dirname, "..", "assets", "logo.png"),
+      modal: true,
+      width: 500,
+      height: 200,
+      title: "Settings",
+      type: "dialog",
+      minimizable: false,
+      maximizable: false,
+      resizable: false,
+      titleBarStyle: "default",
+      frame: true,
+      webPreferences: {
+        nodeIntegrationInWorker: true,
+        preload: path.join(__dirname, "settings_preload.js"),
+        nodeIntegration: true,
+      },
+    });
+  }
   settingsWindow.center();
   settingsWindow.show();
   settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
@@ -65,9 +69,90 @@ function openSettings() {
   }
 }
 
-function createWindow() {
-  clipboard.writeText(VolPath, "clipboard");
+function toggleOverlayWindow() {
+  if (overlayWindow) {
+    console.log("closing overlay");
+    mainWindow.showInactive();
+    overlayWindow.close();
+    overlayWindow = undefined;
+    return;
+  }
 
+  console.log("opening overlay");
+
+  const osuWindow = getWindowGeometryByExe("osu!");
+  if (!osuWindow) {
+    console.log("osu! window not found");
+    return;
+  }
+  mainWindow.hide();
+  console.log(osuWindow);
+  const currentDisplay = screen.getDisplayNearestPoint(
+    screen.getCursorScreenPoint(),
+  );
+  const isOsuFullscreen =
+    osuWindow.x === currentDisplay.bounds.x &&
+    osuWindow.y === currentDisplay.bounds.y;
+
+  const nonFullscreenCoordinates = {
+    x: osuWindow.x + 2,
+    y: osuWindow.y + 25,
+    width: osuWindow.width - 4,
+    height: osuWindow.height - 25,
+  };
+
+  overlayWindow = new BrowserWindow({
+    x: isOsuFullscreen ? 0 : nonFullscreenCoordinates.x,
+    y: isOsuFullscreen ? 0 : nonFullscreenCoordinates.y,
+    width: isOsuFullscreen
+      ? currentDisplay.bounds.width
+      : nonFullscreenCoordinates.width,
+    height: isOsuFullscreen
+      ? currentDisplay.bounds.height
+      : nonFullscreenCoordinates.height,
+    show: false,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    opacity: 0.9,
+    titleBarStyle: "hidden",
+    focusable: true,
+    movable: false,
+    fullscreenable: false,
+    fullscreen: false,
+    webPreferences: {
+      nodeIntegrationInWorker: true,
+      preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: true,
+    },
+  });
+
+  overlayWindow.setAlwaysOnTop(true, "screen-saver", 9999);
+  overlayWindow.setVisibleOnAllWorkspaces(true);
+
+  overlayWindow.webContents.setUserAgent("osu.direct " + version);
+  overlayWindow.loadURL("https://osu.direct/browse");
+
+  overlayWindow.webContents.addListener("will-navigate", async (e, i) => {
+    if (i.endsWith("/settings")) {
+      e.preventDefault();
+      openSettings();
+    }
+  });
+
+  // TODO: if osu is in fullscreen, it still minimizes it somehow :/
+  overlayWindow.webContents.on("did-finish-load", () => overlayWindow?.showInactive());
+
+  globalShortcut.register("esc", () => {
+    globalShortcut.unregister("esc");
+    overlayWindow?.close();
+    overlayWindow = undefined;
+  });
+}
+
+function createWindow() {
   const windowWidth = 1740;
   const windowHeight = 1035;
 
@@ -230,9 +315,7 @@ function createWindow() {
   const menu = Menu.buildFromTemplate([]);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadURL(
-    "https://osu.direct/browse",
-  );
+  mainWindow.loadURL("https://osu.direct/browse");
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -254,6 +337,8 @@ if (!gotTheLock) {
     app.on("activate", function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+
+    globalShortcut.register("f6", () => toggleOverlayWindow());
   });
 
   app.on("window-all-closed", async () => {

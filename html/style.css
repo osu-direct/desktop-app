@@ -102,3 +102,20 @@ body {
   border-color: #4b5563;
 }
 
+.fullscreen-overlay {
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.95);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 80px;
+  transform: translateY(600);
+  transition: transform 0.1s ease-in;
+}
+
+.fullscreen-overlay.show {
+  transform: translateY(0);
+}
+
