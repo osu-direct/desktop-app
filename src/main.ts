@@ -39,29 +39,28 @@ function openSettings() {
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
 
-  if (!settingsWindow) {
-    settingsWindow = new BrowserWindow({
-      parent: mainWindow,
-      x: bounds.x,
-      y: bounds.y,
-      icon: path.join(__dirname, "..", "assets", "logo.png"),
-      modal: true,
-      width: 500,
-      height: 200,
-      title: "Settings",
-      type: "dialog",
-      minimizable: false,
-      maximizable: false,
-      resizable: false,
-      titleBarStyle: "default",
-      frame: true,
-      webPreferences: {
-        nodeIntegrationInWorker: true,
-        preload: path.join(__dirname, "settings_preload.js"),
-        nodeIntegration: true,
-      },
-    });
-  }
+  settingsWindow = new BrowserWindow({
+    parent: mainWindow,
+    x: bounds.x,
+    y: bounds.y,
+    icon: path.join(__dirname, "..", "assets", "logo.png"),
+    modal: true,
+    width: 500,
+    height: 200,
+    title: "Settings",
+    type: "dialog",
+    minimizable: false,
+    maximizable: false,
+    resizable: false,
+    titleBarStyle: "default",
+    frame: true,
+    webPreferences: {
+      nodeIntegrationInWorker: true,
+      preload: path.join(__dirname, "settings_preload.js"),
+      nodeIntegration: true,
+    },
+  });
+  
   settingsWindow.center();
   settingsWindow.show();
   settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
