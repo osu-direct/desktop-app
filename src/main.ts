@@ -60,7 +60,7 @@ function openSettings() {
       nodeIntegration: true,
     },
   });
-  
+
   settingsWindow.center();
   settingsWindow.show();
   settingsWindow.loadFile(path.join(__dirname, "..", "html", "settings.html"));
@@ -81,6 +81,10 @@ function toggleOverlayWindow() {
       osuWindow.restore();
       osuWindow.bringToTop();
       osuWindow = undefined;
+    }
+    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
+    if (muteOsuOnPreview) {
+      muteApp("osu!");
     }
     globalShortcut.unregister("esc");
     return;
@@ -160,6 +164,10 @@ function toggleOverlayWindow() {
       osuWindow.bringToTop();
 
       osuWindow = undefined;
+    }
+    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
+    if (muteOsuOnPreview) {
+      muteApp("osu!");
     }
     globalShortcut.unregister("esc");
   });
