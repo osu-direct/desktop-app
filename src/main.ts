@@ -21,7 +21,7 @@ import { processes } from "systeminformation";
 import { runFile, runFileDetached } from "./execUtil";
 import { version } from "./appInfo";
 import { muteApp, unmuteApp } from "./volumeUtil";
-import { getWindowGeometryByExe } from "./windowUtil";
+import { Window, windowManager } from "node-window-manager";
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -30,6 +30,7 @@ const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
 let overlayWindow: BrowserWindow | undefined;
+let osuWindow: Window | undefined;
 
 setupTitlebar();
 configStorage.init();
@@ -70,35 +71,40 @@ function openSettings() {
 }
 
 function toggleOverlayWindow() {
+  const osuTempWindow = windowManager
+    .getWindows()
+    .find((window) => window.getTitle().startsWith("osu!"));
   if (overlayWindow) {
-    console.log("closing overlay");
     mainWindow.showInactive();
     overlayWindow.close();
     overlayWindow = undefined;
+    if (osuWindow) {
+      osuWindow.restore();
+      osuWindow.bringToTop();
+      osuWindow = undefined;
+    }
+    globalShortcut.unregister("esc");
     return;
   }
 
-  console.log("opening overlay");
+  if (!osuTempWindow) return;
 
-  const osuWindow = getWindowGeometryByExe("osu!");
-  if (!osuWindow) {
-    console.log("osu! window not found");
-    return;
-  }
-  mainWindow.hide();
-  console.log(osuWindow);
+  osuWindow = osuTempWindow;
+
   const currentDisplay = screen.getDisplayNearestPoint(
     screen.getCursorScreenPoint(),
   );
+  const osuWindowBounds = osuWindow.getBounds();
+
   const isOsuFullscreen =
-    osuWindow.x === currentDisplay.bounds.x &&
-    osuWindow.y === currentDisplay.bounds.y;
+    osuWindowBounds.x === currentDisplay.bounds.x &&
+    osuWindowBounds.y === currentDisplay.bounds.y;
 
   const nonFullscreenCoordinates = {
-    x: osuWindow.x + 2,
-    y: osuWindow.y + 25,
-    width: osuWindow.width - 4,
-    height: osuWindow.height - 25,
+    x: osuWindowBounds.x! + 2,
+    y: osuWindowBounds.y! + 25,
+    width: osuWindowBounds.width! - 4,
+    height: osuWindowBounds.height! - 25,
   };
 
   overlayWindow = new BrowserWindow({
@@ -112,19 +118,18 @@ function toggleOverlayWindow() {
       : nonFullscreenCoordinates.height,
     show: false,
     frame: false,
-    transparent: true,
     resizable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    opacity: 0.9,
     titleBarStyle: "hidden",
     focusable: true,
     movable: false,
-    fullscreenable: false,
-    fullscreen: false,
+    kiosk: isOsuFullscreen,
+    fullscreen: isOsuFullscreen,
+    fullscreenable: true,
     webPreferences: {
       nodeIntegrationInWorker: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload_overlay.js"),
       nodeIntegration: true,
     },
   });
@@ -142,13 +147,19 @@ function toggleOverlayWindow() {
     }
   });
 
-  // TODO: if osu is in fullscreen, it still minimizes it somehow :/
-  overlayWindow.webContents.on("did-finish-load", () => overlayWindow?.showInactive());
+  overlayWindow.webContents.on("did-finish-load", () => overlayWindow?.show());
 
   globalShortcut.register("esc", () => {
-    globalShortcut.unregister("esc");
+    mainWindow.showInactive();
     overlayWindow?.close();
     overlayWindow = undefined;
+    if (osuWindow) {
+      osuWindow.restore();
+      osuWindow.bringToTop();
+
+      osuWindow = undefined;
+    }
+    globalShortcut.unregister("esc");
   });
 }
 
@@ -288,7 +299,6 @@ function createWindow() {
   });
 
   ipcMain.on("set-osu-mute", async (_e: Event, mute: string) => {
-    console.log("setting mute_osu to", mute);
     configStorage.set("mute_osu", mute);
   });
 

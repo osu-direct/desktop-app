@@ -70,21 +70,22 @@
   "author": "HorizonCode",
   "license": "CC0-1.0",
   "devDependencies": {
-    "@electron/rebuild": "^3.3.0",
-    "@typescript-eslint/eslint-plugin": "^6.6.0",
-    "@typescript-eslint/parser": "^6.6.0",
-    "electron": "^25.8.1",
-    "electron-builder": "^24.6.4",
-    "eslint": "^8.48.0",
-    "tsx": "^3.12.8",
-    "typescript": "^5.2.2"
+    "@electron/rebuild": "^4.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
+    "eslint": "^9.39.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@types/better-sqlite3": "^7.6.4",
-    "@types/ws": "^8.5.5",
-    "better-sqlite3": "^8.6.0",
-    "custom-electron-titlebar": "^4.2.7",
-    "systeminformation": "^5.22.8",
-    "ws": "^8.13.0"
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/ws": "^8.18.1",
+    "better-sqlite3": "^12.6.2",
+    "custom-electron-titlebar": "^4.2.8",
+    "node-window-manager": "^2.2.4",
+    "systeminformation": "^5.30.7",
+    "ws": "^8.19.0"
   }
 }
