@@ -109,8 +109,6 @@ async function injectOverlay() {
     await overlay.setAnchor(id, length(0), length(0));
     await overlay.setMargin(id, length(0), length(0), length(0), length(0));
 
-    console.log(displayFrequency);
-
     let surface: ElectronOverlaySurface | null = null;
     await overlay.listenInput(id, false, true);
 
