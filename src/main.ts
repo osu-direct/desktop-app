@@ -102,10 +102,14 @@ async function injectOverlay() {
         resolve([id, width, height, luid]),
       ),
     );
+    const point = screen.getCursorScreenPoint();
+    const { displayFrequency } = screen.getDisplayNearestPoint(point);
     const window: OverlayWindow = { id, overlay };
     await overlay.setPosition(id, length(0), length(0));
     await overlay.setAnchor(id, length(0), length(0));
     await overlay.setMargin(id, length(0), length(0), length(0), length(0));
+
+    console.log(displayFrequency);
 
     let surface: ElectronOverlaySurface | null = null;
     await overlay.listenInput(id, false, true);
@@ -125,10 +129,11 @@ async function injectOverlay() {
       opacity: 0.5,
     });
     overlayWindow.setSize(width, height, false);
-    overlayWindow.webContents.frameRate = 144;
+    overlayWindow.webContents.frameRate = displayFrequency;
 
     let overlayInput: ElectronOverlayInput | null = null;
     let block = false;
+
     overlay.event.on("keyboard_input", (_, input) => {
       if (
         input.kind === "Key" &&
