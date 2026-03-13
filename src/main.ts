@@ -124,7 +124,6 @@ async function injectOverlay() {
         nodeIntegration: true,
       },
       show: false,
-      opacity: 0.5,
     });
     overlayWindow.setSize(width, height, false);
     overlayWindow.webContents.frameRate = displayFrequency;
@@ -134,10 +133,14 @@ async function injectOverlay() {
 
     overlay.event.on("keyboard_input", (_, input) => {
       if (
-        input.kind === "Key" &&
-        input.state == "Released" &&
-        input.key.code === 0x75 &&
-        !input.key.extended
+        (input.kind === "Key" &&
+          input.state == "Released" &&
+          input.key.code === 0x75 &&
+          !input.key.extended) ||
+        (block &&
+          input.kind === "Key" &&
+          input.state === "Released" &&
+          input.key.code === 0x1b)
       ) {
         block = !block;
 
