@@ -132,7 +132,7 @@ async function injectOverlay() {
     let shiftState: InputState = "Released";
     let aState: InputState = "Released";
     overlay.event.on("keyboard_input", (_, input) => {
-      keybind: if (input.kind === "Key") {
+      /* keybind: if (input.kind === "Key") {
         const key = input.key;
         if (key.code === 0x11 && !key.extended) {
           shiftState = input.state;
@@ -140,31 +140,37 @@ async function injectOverlay() {
           aState = input.state;
         } else {
           break keybind;
+        } */
+
+      /* if (shiftState === aState && shiftState === "Pressed") { */
+      //f6 key
+      console.log(input);
+      if (
+        input.kind === "Key" &&
+        input.state == "Released" &&
+        input.key.code === 0x75 &&
+        !input.key.extended
+      ) {
+        block = !block;
+
+        if (block) {
+          overlayInput = ElectronOverlayInput.connect(
+            window,
+            overlayWindow.webContents,
+          );
+          surface = ElectronOverlaySurface.connect(
+            window,
+            luid,
+            overlayWindow.webContents,
+          );
+          overlayWindow.webContents.startPainting();
+          overlayWindow.webContents.invalidate();
+          overlayWindow.focusOnWebView();
+          if (isDev) overlayWindow.webContents.openDevTools({ mode: "detach" });
         }
+        void overlay.blockInput(id, block);
 
-        if (shiftState === aState && shiftState === "Pressed") {
-          block = !block;
-
-          if (block) {
-            overlayInput = ElectronOverlayInput.connect(
-              window,
-              overlayWindow.webContents,
-            );
-            surface = ElectronOverlaySurface.connect(
-              window,
-              luid,
-              overlayWindow.webContents,
-            );
-            overlayWindow.webContents.startPainting();
-            overlayWindow.webContents.invalidate();
-            overlayWindow.focusOnWebView();
-            if (isDev)
-              overlayWindow.webContents.openDevTools({ mode: "detach" });
-          }
-          void overlay.blockInput(id, block);
-
-          return;
-        }
+        return;
       }
     });
 
@@ -189,7 +195,7 @@ async function injectOverlay() {
 
     overlayWindow.webContents.stopPainting();
     overlayWindow.webContents.setUserAgent("osu.direct-overlay " + version);
-    await overlayWindow.loadURL("http://localhost:5173/browse");
+    await overlayWindow.loadURL("https://osu.direct/browse");
   } else {
     injectedWindow = undefined;
   }
