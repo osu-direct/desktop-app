@@ -129,22 +129,7 @@ async function injectOverlay() {
 
     let overlayInput: ElectronOverlayInput | null = null;
     let block = false;
-    let shiftState: InputState = "Released";
-    let aState: InputState = "Released";
     overlay.event.on("keyboard_input", (_, input) => {
-      /* keybind: if (input.kind === "Key") {
-        const key = input.key;
-        if (key.code === 0x11 && !key.extended) {
-          shiftState = input.state;
-        } else if (key.code === 0x44) {
-          aState = input.state;
-        } else {
-          break keybind;
-        } */
-
-      /* if (shiftState === aState && shiftState === "Pressed") { */
-      //f6 key
-      console.log(input);
       if (
         input.kind === "Key" &&
         input.state == "Released" &&
@@ -202,7 +187,11 @@ async function injectOverlay() {
 }
 
 function createWindow() {
-  if (mainWindow) return;
+  if (mainWindow) {
+    mainWindow.restore();
+    mainWindow.focus();
+    return;
+  }
   const windowWidth = 1740;
   const windowHeight = 1035;
 
@@ -409,7 +398,7 @@ if (!gotTheLock) {
 
     tray = new Tray(path.join(__dirname, "..", "assets", "logo.png"));
     const contextMenu = Menu.buildFromTemplate([
-      { role: "unhide", click: () => createWindow() },
+      { label: "Show", click: () => createWindow() },
       { role: "quit" },
     ]);
     tray.setToolTip("osu.direct Desktop App");
