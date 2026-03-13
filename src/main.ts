@@ -7,7 +7,6 @@ import {
   Menu,
   screen,
   shell,
-  globalShortcut,
 } from "electron";
 import {
   attachTitlebarToWindow,
@@ -15,13 +14,24 @@ import {
 } from "custom-electron-titlebar/main";
 import * as path from "path";
 import * as fs from "fs";
-import * as configStorage from "./configStorage";
+import * as configStorage from "./configStorage.js";
 import os from "os";
 import { processes } from "systeminformation";
-import { runFile, runFileDetached } from "./execUtil";
-import { version } from "./appInfo";
-import { muteApp, unmuteApp } from "./volumeUtil";
+import { runFile, runFileDetached } from "./execUtil.js";
+import { version } from "./appInfo.js";
+import { muteApp, unmuteApp } from "./volumeUtil.js";
 import { Window, windowManager } from "node-window-manager";
+import { InputState } from "@asdf-overlay/core/input";
+import {
+  defaultDllDir,
+  GpuLuid,
+  length,
+  Overlay,
+} from "@asdf-overlay/core";
+import { OverlayWindow } from "@asdf-overlay/electron";
+import { ElectronOverlaySurface } from "@asdf-overlay/electron/surface";
+import { ElectronOverlayInput } from "@asdf-overlay/electron/input";
+import { fileURLToPath } from "url";
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -29,14 +39,16 @@ const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
 let mainWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
-let overlayWindow: BrowserWindow | undefined;
-let osuWindow: Window | undefined;
 
-// used to preserve the last filter/query state after closing the overlay
-let lastOverlayURL = "https://osu.direct/browse";
+let injectedWindow: Window | undefined;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 setupTitlebar();
 configStorage.init();
+
+console.log(path.join(__dirname, "settings_preload.js"));
 
 function openSettings() {
   const point = screen.getCursorScreenPoint();
@@ -72,112 +84,113 @@ function openSettings() {
   }
 }
 
-function toggleOverlayWindow() {
-  const osuTempWindow = windowManager
+async function injectOverlay() {
+  const osuWindow = windowManager
     .getWindows()
     .find((window) => window.getTitle().startsWith("osu!"));
-  if (overlayWindow) {
-    lastOverlayURL = overlayWindow.webContents.getURL();
+  if (osuWindow) {
+    if (injectedWindow) return;
+    injectedWindow = osuWindow;
+    const pid = osuWindow.processId;
+    const overlay = await Overlay.attach(
+      defaultDllDir().replace("app.asar", "app.asar.unpacked"),
+      pid,
+    );
+    const [id, width, height, luid] = await new Promise<
+      [number, number, number, GpuLuid]
+    >((resolve) =>
+      overlay.event.once("added", (id, width, height, luid) =>
+        resolve([id, width, height, luid]),
+      ),
+    );
+    const window: OverlayWindow = { id, overlay };
+    await overlay.setPosition(id, length(0), length(0));
+    await overlay.setAnchor(id, length(0), length(0));
+    await overlay.setMargin(id, length(0), length(0), length(0), length(0));
 
-    mainWindow.showInactive();
-    overlayWindow.close();
-    overlayWindow = undefined;
-    if (osuWindow) {
-      osuWindow.restore();
-      osuWindow.bringToTop();
-      osuWindow = undefined;
-    }
-    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
-    if (muteOsuOnPreview) {
-      unmuteApp("osu!");
-    }
-    globalShortcut.unregister("esc");
-    return;
+    let surface: ElectronOverlaySurface | null = null;
+    await overlay.listenInput(id, false, true);
+
+    const overlayWindow = new BrowserWindow({
+      webPreferences: {
+        offscreen: {
+          useSharedTexture: true,
+          sharedTexturePixelFormat: "argb",
+        },
+        transparent: true,
+        backgroundThrottling: false,
+        preload: path.join(__dirname, "preload_overlay.js"),
+        nodeIntegration: true,
+      },
+      show: false,
+      opacity: 0.5,
+    });
+    overlayWindow.setSize(width, height, false);
+    overlayWindow.webContents.frameRate = 144;
+
+    let overlayInput: ElectronOverlayInput | null = null;
+    let block = false;
+    let shiftState: InputState = "Released";
+    let aState: InputState = "Released";
+    overlay.event.on("keyboard_input", (_, input) => {
+      keybind: if (input.kind === "Key") {
+        const key = input.key;
+        if (key.code === 0x11 && !key.extended) {
+          shiftState = input.state;
+        } else if (key.code === 0x44) {
+          aState = input.state;
+        } else {
+          break keybind;
+        }
+
+        if (shiftState === aState && shiftState === "Pressed") {
+          block = !block;
+
+          if (block) {
+            overlayInput = ElectronOverlayInput.connect(
+              window,
+              overlayWindow.webContents,
+            );
+            surface = ElectronOverlaySurface.connect(
+              window,
+              luid,
+              overlayWindow.webContents,
+            );
+            overlayWindow.webContents.startPainting();
+            overlayWindow.webContents.invalidate();
+            overlayWindow.focusOnWebView();
+          }
+          void overlay.blockInput(id, block);
+          return;
+        }
+      }
+    });
+
+    overlay.event.on("input_blocking_ended", () => {
+      block = false;
+      overlayWindow.webContents.stopPainting();
+      overlayWindow.blurWebView();
+      void surface?.disconnect().then(() => {
+        surface = null;
+      });
+      void overlayInput?.disconnect().then(() => {
+        overlayInput = null;
+      });
+    });
+
+    overlay.event.on("resized", (windowId, width, height) => {
+      if (windowId !== id) {
+        return;
+      }
+      overlayWindow.setSize(width, height);
+    });
+
+    overlayWindow.webContents.stopPainting();
+    overlayWindow.webContents.setUserAgent("osu.direct " + version);
+    await overlayWindow.loadURL("https://osu.direct/browse");
+  } else {
+    injectedWindow = undefined;
   }
-
-  if (!osuTempWindow) return;
-
-  osuWindow = osuTempWindow;
-
-  const currentDisplay = screen.getDisplayNearestPoint(
-    screen.getCursorScreenPoint(),
-  );
-  const osuWindowBounds = osuWindow.getBounds();
-
-  const isOsuFullscreen =
-    osuWindowBounds.x === currentDisplay.bounds.x &&
-    osuWindowBounds.y === currentDisplay.bounds.y;
-
-  const nonFullscreenCoordinates = {
-    x: osuWindowBounds.x! + 2,
-    y: osuWindowBounds.y! + 25,
-    width: osuWindowBounds.width! - 4,
-    height: osuWindowBounds.height! - 25,
-  };
-
-  overlayWindow = new BrowserWindow({
-    x: isOsuFullscreen ? 0 : nonFullscreenCoordinates.x,
-    y: isOsuFullscreen ? 0 : nonFullscreenCoordinates.y,
-    width: isOsuFullscreen
-      ? currentDisplay.bounds.width
-      : nonFullscreenCoordinates.width,
-    height: isOsuFullscreen
-      ? currentDisplay.bounds.height
-      : nonFullscreenCoordinates.height,
-    show: false,
-    frame: false,
-    resizable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    titleBarStyle: "hidden",
-    focusable: true,
-    movable: false,
-    kiosk: isOsuFullscreen,
-    fullscreen: isOsuFullscreen,
-    fullscreenable: true,
-    webPreferences: {
-      nodeIntegrationInWorker: true,
-      preload: path.join(__dirname, "preload_overlay.js"),
-      nodeIntegration: true,
-    },
-  });
-
-  overlayWindow.setAlwaysOnTop(true, "screen-saver", 1);
-  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  overlayWindow.setMenu(null);
-
-  overlayWindow.webContents.setUserAgent("osu.direct " + version);
-  overlayWindow.loadURL(lastOverlayURL);
-
-  overlayWindow.webContents.addListener("will-navigate", async (e, i) => {
-    if (i.endsWith("/settings")) {
-      e.preventDefault();
-      openSettings();
-    }
-  });
-
-  overlayWindow.webContents.on("did-finish-load", () => {
-    overlayWindow?.show();
-    if (isOsuFullscreen && osuWindow) osuWindow.minimize();
-  });
-
-  globalShortcut.register("esc", () => {
-    if (overlayWindow) lastOverlayURL = overlayWindow.webContents.getURL();
-    mainWindow.showInactive();
-    overlayWindow?.close();
-    overlayWindow = undefined;
-    if (osuWindow) {
-      osuWindow.restore();
-      osuWindow.bringToTop();
-
-      osuWindow = undefined;
-    }
-    const muteOsuOnPreview = configStorage.get("mute_osu")?.val ?? true;
-    if (muteOsuOnPreview) {
-      unmuteApp("osu!");
-    }
-    globalShortcut.unregister("esc");
-  });
 }
 
 function createWindow() {
@@ -240,10 +253,10 @@ function createWindow() {
       if (osuExecuteable) {
         const folder = path.dirname(osuExecuteable.path);
         const imported = await runFile(folder, osuExecuteable.path, [file]);
-        if (imported && osuWindow && overlayWindow) {
+        /* if (imported && osuWindow && overlayWindow) {
           await new Promise((res) => setTimeout(res, 500));
           overlayWindow.focus();
-        }
+        } */
         return {
           message: imported
             ? "Successfully imported into osu!"
@@ -369,7 +382,9 @@ if (!gotTheLock) {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
-    globalShortcut.register("f6", () => toggleOverlayWindow());
+    setInterval(() => {
+      injectOverlay();
+    }, 1000);
   });
 
   app.on("window-all-closed", async () => {

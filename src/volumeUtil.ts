@@ -1,5 +1,5 @@
 import * as path from "path";
-import { runFile, runFileDetached } from "./execUtil";
+import { runFile, runFileDetached } from "./execUtil.js";
 import { app } from "electron";
 
 const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;

@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import { Setting } from "./types";
+import { Setting } from "./types.js";
 
 window.addEventListener("load", async () => {
   const songsDirInputField = document.getElementById(
@@ -13,14 +13,16 @@ window.addEventListener("load", async () => {
   const settings: Setting[] = await ipcRenderer.invoke("get-settings");
 
   const songsDir = settings.find((setting) => setting.key === "songs_dir");
-  songsDirInputField.value = songsDir?.val as string ?? "";
+  songsDirInputField.value = (songsDir?.val as string) ?? "";
 
   const mutePreview = settings.find((setting) => setting.key === "mute_osu");
   mutePreviewCheckbox.checked =
-    (mutePreview?.val as string ?? "true") === "true";
+    ((mutePreview?.val as string) ?? "true") === "true";
 
-  document.getElementById("browse-download-folder").onclick =
-    async function () {
+  const browseButton = document.getElementById("browse-download-folder");
+
+  if (browseButton)
+    browseButton.onclick = async function () {
       const selectedFolder: string = await ipcRenderer.invoke("browse-folder");
       if (selectedFolder && selectedFolder.length > 0) {
         songsDirInputField.value = selectedFolder;

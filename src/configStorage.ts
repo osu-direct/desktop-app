@@ -1,5 +1,5 @@
-import { dbFile } from "./glob";
-import { Setting } from "./types";
+import { dbFile } from "./glob.js";
+import { Setting } from "./types.js";
 
 export const init = (): void => {
   dbFile.exec(

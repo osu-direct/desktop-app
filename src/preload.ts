@@ -1,31 +1,28 @@
-import { Titlebar, TitlebarColor } from "custom-electron-titlebar";
-import { ipcRenderer } from "electron";
-import { version } from "./appInfo";
+import CET from "custom-electron-titlebar";
 
-let titleBar: Titlebar | undefined;
+const { Titlebar, TitlebarColor } = CET;
+import { ipcRenderer } from "electron";
+import { version } from "./appInfo.js";
+
 let inited = false;
 
 window.addEventListener("load", () => {
   if (inited) return;
   inited = true;
 
-  if (!titleBar) {
-    titleBar = new Titlebar({
-      backgroundColor: TitlebarColor.fromHex("#050616"),
-      itemBackgroundColor: TitlebarColor.fromHex("#050616"),
-      enableMnemonics: false,
-    });
-    titleBar.updateTitle(`osu.direct ${version}`);
-  }
+  const titleBar = new Titlebar({
+    backgroundColor: TitlebarColor.fromHex("#050616"),
+    itemBackgroundColor: TitlebarColor.fromHex("#050616"),
+    enableMnemonics: false,
+  });
+  titleBar.updateTitle(`osu.direct ${version}`);
 
   let previewPlaying = false;
 
   window.addEventListener("update-client", async () => {
     const result = await ipcRenderer.invoke("update-client");
     if (result.failed) {
-      window.dispatchEvent(
-        new CustomEvent("update-failed"),
-      );
+      window.dispatchEvent(new CustomEvent("update-failed"));
     }
   });
 
