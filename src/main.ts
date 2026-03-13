@@ -5,8 +5,10 @@ import {
   Event,
   ipcMain,
   Menu,
+  Notification,
   screen,
   shell,
+  Tray,
 } from "electron";
 import {
   attachTitlebarToWindow,
@@ -22,12 +24,7 @@ import { version } from "./appInfo.js";
 import { muteApp, unmuteApp } from "./volumeUtil.js";
 import { Window, windowManager } from "node-window-manager";
 import { InputState } from "@asdf-overlay/core/input";
-import {
-  defaultDllDir,
-  GpuLuid,
-  length,
-  Overlay,
-} from "@asdf-overlay/core";
+import { defaultDllDir, GpuLuid, length, Overlay } from "@asdf-overlay/core";
 import { OverlayWindow } from "@asdf-overlay/electron";
 import { ElectronOverlaySurface } from "@asdf-overlay/electron/surface";
 import { ElectronOverlayInput } from "@asdf-overlay/electron/input";
@@ -37,7 +34,9 @@ const gotTheLock = app.requestSingleInstanceLock();
 
 const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
-let mainWindow: BrowserWindow;
+let tray: Tray | undefined;
+
+let mainWindow: BrowserWindow | undefined;
 let settingsWindow: BrowserWindow;
 
 let injectedWindow: Window | undefined;
@@ -159,8 +158,11 @@ async function injectOverlay() {
             overlayWindow.webContents.startPainting();
             overlayWindow.webContents.invalidate();
             overlayWindow.focusOnWebView();
+            if (isDev)
+              overlayWindow.webContents.openDevTools({ mode: "detach" });
           }
           void overlay.blockInput(id, block);
+
           return;
         }
       }
@@ -186,14 +188,15 @@ async function injectOverlay() {
     });
 
     overlayWindow.webContents.stopPainting();
-    overlayWindow.webContents.setUserAgent("osu.direct " + version);
-    await overlayWindow.loadURL("https://osu.direct/browse");
+    overlayWindow.webContents.setUserAgent("osu.direct-overlay " + version);
+    await overlayWindow.loadURL("http://localhost:5173/browse");
   } else {
     injectedWindow = undefined;
   }
 }
 
 function createWindow() {
+  if (mainWindow) return;
   const windowWidth = 1740;
   const windowHeight = 1035;
 
@@ -227,6 +230,42 @@ function createWindow() {
 
   mainWindow.webContents.setUserAgent("osu.direct " + version);
 
+  mainWindow.webContents.addListener("will-navigate", async (e, i) => {
+    if (i.endsWith("/settings")) {
+      e.preventDefault();
+      openSettings();
+    }
+  });
+
+  mainWindow.webContents.on("did-finish-load", () => mainWindow?.show());
+  mainWindow.on("close", () => {
+    const alreadyMinimized = configStorage.get("minimized");
+    if (!alreadyMinimized) {
+      new Notification({
+        title: "osu.direct Desktop App",
+        body: "I am here! Just click the Tray Icon to re-open the app.",
+        icon: path.join(__dirname, "..", "assets", "logo.png"),
+      }).show();
+      configStorage.set("minimized", "true");
+    }
+    mainWindow = undefined;
+  });
+
+  mainWindow.hide();
+
+  attachTitlebarToWindow(mainWindow);
+
+  const menu = Menu.buildFromTemplate([]);
+  Menu.setApplicationMenu(menu);
+
+  mainWindow.loadURL("https://osu.direct/browse");
+
+  if (isDev) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
+}
+
+function registerIPCHandles() {
   ipcMain.handle(
     "download",
     async (_e, data: { filename: string; data: ArrayBuffer }) => {
@@ -276,13 +315,6 @@ function createWindow() {
       }
     },
   );
-
-  mainWindow.webContents.addListener("will-navigate", async (e, i) => {
-    if (i.endsWith("/settings")) {
-      e.preventDefault();
-      openSettings();
-    }
-  });
 
   ipcMain.handle("update-client", async () => {
     const tempFolder = os.tmpdir();
@@ -349,22 +381,8 @@ function createWindow() {
       unmuteApp("osu!");
     }
   });
-
-  mainWindow.webContents.on("did-finish-load", () => mainWindow.show());
-
-  mainWindow.hide();
-
-  attachTitlebarToWindow(mainWindow);
-
-  const menu = Menu.buildFromTemplate([]);
-  Menu.setApplicationMenu(menu);
-
-  mainWindow.loadURL("https://osu.direct/browse");
-
-  if (isDev) {
-    mainWindow.webContents.openDevTools({ mode: "detach" });
-  }
 }
+
 if (!gotTheLock) {
   app.quit();
 } else {
@@ -376,11 +394,21 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(async () => {
+    registerIPCHandles();
     createWindow();
 
     app.on("activate", function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+
+    tray = new Tray(path.join(__dirname, "..", "assets", "logo.png"));
+    const contextMenu = Menu.buildFromTemplate([
+      { role: "unhide", click: () => createWindow() },
+      { role: "quit" },
+    ]);
+    tray.setToolTip("osu.direct Desktop App");
+    tray.on("double-click", () => createWindow());
+    tray.setContextMenu(contextMenu);
 
     setInterval(() => {
       injectOverlay();
@@ -388,8 +416,8 @@ if (!gotTheLock) {
   });
 
   app.on("window-all-closed", async () => {
-    if (process.platform !== "darwin") {
+    /* if (process.platform !== "darwin") {
       app.quit();
-    }
+    } */
   });
 }
