@@ -29,12 +29,15 @@ import { OverlayWindow } from "@asdf-overlay/electron";
 import { ElectronOverlaySurface } from "@asdf-overlay/electron/surface";
 import { ElectronOverlayInput } from "@asdf-overlay/electron/input";
 import { fileURLToPath } from "url";
+import { keyNameToHex } from "./keyUtil.js";
 
 const gotTheLock = app.requestSingleInstanceLock();
 
 const isDev = "ELECTRON_IS_DEV" in process.env || !app.isPackaged;
 
 let tray: Tray | undefined;
+
+let overlayKeybind: string = "F6";
 
 let mainWindow: BrowserWindow | undefined;
 let settingsWindow: BrowserWindow;
@@ -47,8 +50,6 @@ const __dirname = path.dirname(__filename);
 setupTitlebar();
 configStorage.init();
 
-console.log(path.join(__dirname, "settings_preload.js"));
-
 function openSettings() {
   const point = screen.getCursorScreenPoint();
   const { bounds } = screen.getDisplayNearestPoint(point);
@@ -60,7 +61,7 @@ function openSettings() {
     icon: path.join(__dirname, "..", "assets", "logo.png"),
     modal: true,
     width: 500,
-    height: 200,
+    height: 290,
     title: "Settings",
     type: "dialog",
     minimizable: false,
@@ -129,14 +130,60 @@ async function injectOverlay() {
     overlayWindow.webContents.frameRate = displayFrequency;
 
     let overlayInput: ElectronOverlayInput | null = null;
+
+    let shiftState: InputState = "Released";
+    let ctrlState: InputState = "Released";
+    let altState: InputState = "Released";
+    let metaState: InputState = "Released";
+
     let block = false;
 
     overlay.event.on("keyboard_input", (_, input) => {
+      const parts = overlayKeybind.split("+").map((p) => p.toUpperCase());
+      const mainKey = parts[parts.length - 1];
+      const mainKeyCode = Number(keyNameToHex(mainKey));
+
+      const needsCtrl = parts.includes("CTRL");
+      const needsShift = parts.includes("SHIFT");
+      const needsAlt = parts.includes("ALT");
+      const needsMeta = parts.includes("META");
+
+      if (input.kind === "Key") {
+        const key = input.key;
+        if (key.code === 0x10 || key.code === 0xa0 || key.code === 0xa1) {
+          shiftState = input.state;
+        } else if (
+          key.code === 0x11 ||
+          key.code === 0xa2 ||
+          key.code === 0xa3
+        ) {
+          ctrlState = input.state;
+        } else if (
+          key.code === 0x12 ||
+          key.code === 0xa4 ||
+          key.code === 0xa5
+        ) {
+          altState = input.state;
+        } else if (
+          key.code === 0x5b ||
+          key.code === 0x5c ||
+          key.code === 0xf1
+        ) {
+          metaState = input.state;
+        }
+      }
+
+      const modifiersMatch =
+        (ctrlState === "Pressed") === needsCtrl &&
+        (shiftState === "Pressed") === needsShift &&
+        (altState === "Pressed") === needsAlt &&
+        (metaState === "Pressed") === needsMeta;
+
       if (
         (input.kind === "Key" &&
-          input.state == "Released" &&
-          input.key.code === 0x75 &&
-          !input.key.extended) ||
+          input.state === "Released" &&
+          input.key.code === mainKeyCode &&
+          modifiersMatch) ||
         (block &&
           input.kind === "Key" &&
           input.state === "Released" &&
@@ -293,10 +340,6 @@ function registerIPCHandles() {
       if (osuExecuteable) {
         const folder = path.dirname(osuExecuteable.path);
         const imported = await runFile(folder, osuExecuteable.path, [file]);
-        /* if (imported && osuWindow && overlayWindow) {
-          await new Promise((res) => setTimeout(res, 500));
-          overlayWindow.focus();
-        } */
         return {
           message: imported
             ? "Successfully imported into osu!"
@@ -361,6 +404,11 @@ function registerIPCHandles() {
     return allSettings;
   });
 
+  ipcMain.on("set-keybind", async (_e: Event, keybind: string) => {
+    overlayKeybind = keybind;
+    configStorage.set("overlay_keybind", keybind);
+  });
+
   ipcMain.on("set-folder", async (_e: Event, folder: string) => {
     configStorage.set("songs_dir", folder);
   });
@@ -410,6 +458,9 @@ if (!gotTheLock) {
     tray.setToolTip("osu.direct Desktop App");
     tray.on("double-click", () => createWindow());
     tray.setContextMenu(contextMenu);
+
+    const overlayKey = configStorage.get("overlay_keybind");
+    if (overlayKey) overlayKeybind = overlayKey.val as string;
 
     setInterval(() => {
       injectOverlay();

@@ -46,6 +46,10 @@ body {
   padding: 0.5rem 1rem;
   user-select: none;
   cursor: pointer;
+  white-space: nowrap;
+}
+.button.sm {
+  font-size: 0.8rem;
 }
 
 .checkbox {
@@ -90,11 +94,11 @@ body {
   border-radius: 2px;
 }
 
-.checkbox input:checked + label .checkbox-box::after {
+.checkbox input:checked+label .checkbox-box::after {
   transform: scale(1);
 }
 
-.checkbox input:focus-visible + label .checkbox-box {
+.checkbox input:focus-visible+label .checkbox-box {
   outline-offset: 2px;
 }
 
@@ -102,20 +106,29 @@ body {
   border-color: #4b5563;
 }
 
-.fullscreen-overlay {
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.95);
-  overflow: hidden;
+.keybind-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 80px;
-  transform: translateY(600);
-  transition: transform 0.1s ease-in;
+  flex-direction: row;
+  gap: 8px;
+  font-family: sans-serif;
 }
 
-.fullscreen-overlay.show {
-  transform: translateY(0);
+#recordKeybind {
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
+#keybindDisplay {
+  font-size: 13.3333px;
+  border-radius: 0.35rem;
+  padding: 0.5rem 1rem;
+  background-color: #050616;
+  color: rgb(248, 250, 252);
+  border: 1px solid rgb(30, 41, 59);
+  width: 100%;
+}
+
+h5 {
+  line-height: 0;
+}
