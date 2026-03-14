@@ -1,5 +1,6 @@
 import { ipcRenderer } from "electron";
 import { Setting } from "./types.js";
+import { keyNameToHex } from "./keyUtil.js";
 
 window.addEventListener("load", async () => {
   const songsDirInputField = document.getElementById(
@@ -76,7 +77,8 @@ window.addEventListener("load", async () => {
 
     const invalidKey =
       modifiers.includes(e.key.toUpperCase()) ||
-      disallowedKeys.includes(e.key.toUpperCase());
+      disallowedKeys.includes(e.key.toUpperCase()) ||
+      !keyNameToHex(e.key.toUpperCase());
 
     if (!invalidKey) combo.push(e.key.toUpperCase());
 
