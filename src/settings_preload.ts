@@ -35,15 +35,13 @@ window.addEventListener("load", async () => {
     ipcRenderer.send("set-osu-mute", `${mutePreviewCheckbox.checked}`);
   };
 
-  const overlayKeybind = settings.find(
-    (setting) => setting.key === "overlay_keybind",
-  );
+  const keybind: string = await ipcRenderer.invoke("get-keybind");
   const recordButton = document.getElementById(
     "recordKeybind",
   ) as HTMLButtonElement;
   const display = document.getElementById("keybindDisplay") as HTMLInputElement;
 
-  if (overlayKeybind) display.value = overlayKeybind.val as string;
+  if (keybind) display.value = keybind;
 
   let recording = false;
 
@@ -64,11 +62,8 @@ window.addEventListener("load", async () => {
       recording = false;
       recordButton.disabled = false;
 
-      const settings: Setting[] = await ipcRenderer.invoke("get-settings");
-      const overlayKeybind = settings.find(
-        (setting) => setting.key === "overlay_keybind",
-      );
-      if (overlayKeybind) display.value = overlayKeybind.val as string;
+      const keybind: string = await ipcRenderer.invoke("get-keybind");
+      if (keybind) display.value = keybind;
       return undefined;
     }
 

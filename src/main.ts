@@ -404,6 +404,10 @@ function registerIPCHandles() {
     return allSettings;
   });
 
+  ipcMain.handle("get-keybind", async () => {
+    return overlayKeybind;
+  });
+
   ipcMain.on("set-keybind", async (_e: Event, keybind: string) => {
     overlayKeybind = keybind;
     configStorage.set("overlay_keybind", keybind);
