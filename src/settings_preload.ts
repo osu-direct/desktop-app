@@ -41,37 +41,35 @@ window.addEventListener("load", async () => {
   const recordButton = document.getElementById(
     "recordKeybind",
   ) as HTMLButtonElement;
-  const display = document.getElementById("keybindDisplay") as HTMLDivElement;
+  const display = document.getElementById("keybindDisplay") as HTMLInputElement;
 
-  if (overlayKeybind) display.textContent = overlayKeybind.val as string;
+  if (overlayKeybind) display.value = overlayKeybind.val as string;
 
   let recording = false;
 
   recordButton.addEventListener("click", () => {
     recording = true;
-    display.textContent = "Press a key (ESC to cancel)";
+    display.value = "Press a key (ESC to cancel)";
     recordButton.disabled = true;
   });
   const modifiers = ["CONTROL", "SHIFT", "ALT", "META"];
   const disallowedKeys = ["SPACE", "ENTER", "BACKSPACE", "CAPSLOCK"];
 
-  window.addEventListener("keydown", async (e: KeyboardEvent) => {
-    if (!recording) return;
+  const updateDisplay = async (e: KeyboardEvent) => {
+    if (!recording) return undefined;
 
     e.preventDefault();
 
     if (e.key === "Escape") {
       recording = false;
-      display.textContent = "Cancelled";
       recordButton.disabled = false;
 
       const settings: Setting[] = await ipcRenderer.invoke("get-settings");
       const overlayKeybind = settings.find(
         (setting) => setting.key === "overlay_keybind",
       );
-      if (overlayKeybind) display.textContent = overlayKeybind.val as string;
-
-      return;
+      if (overlayKeybind) display.value = overlayKeybind.val as string;
+      return undefined;
     }
 
     const combo: string[] = [];
@@ -88,13 +86,20 @@ window.addEventListener("load", async () => {
     if (!invalidKey) combo.push(e.key.toUpperCase());
 
     const keybind = combo.join("+");
-    if (!disallowedKeys.includes(e.key.toUpperCase()))
-      display.textContent = keybind;
+    display.value = keybind || "Press a key (ESC to cancel)";
+    return { keybind, invalidKey };
+  };
 
-    if (!invalidKey) {
+  window.addEventListener("keydown", async (e: KeyboardEvent) => {
+    const result = await updateDisplay(e);
+    if (result && !result.invalidKey) {
       recording = false;
       recordButton.disabled = false;
-      ipcRenderer.send("set-keybind", keybind);
+      ipcRenderer.send("set-keybind", result.keybind);
     }
+  });
+
+  window.addEventListener("keyup", (e: KeyboardEvent) => {
+    updateDisplay(e);
   });
 });

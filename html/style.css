@@ -48,6 +48,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
+
 .button.sm {
   font-size: 0.8rem;
 }
@@ -114,19 +115,11 @@ body {
 }
 
 #recordKeybind {
-  padding: 6px 10px;
   cursor: pointer;
   white-space: nowrap;
-}
-
-#keybindDisplay {
-  font-size: 13.3333px;
-  border-radius: 0.35rem;
-  padding: 0.5rem 1rem;
-  background-color: #050616;
-  color: rgb(248, 250, 252);
-  border: 1px solid rgb(30, 41, 59);
-  width: 100%;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
 }
 
 h5 {
