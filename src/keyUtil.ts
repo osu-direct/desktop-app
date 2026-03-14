@@ -11,22 +11,36 @@ const keyNameToCode: Record<string, number> = {
   ARROWDOWN: 40,
   INSERT: 45,
   DELETE: 46,
+  CONTEXTMENU: 93,
+  SEMICOLON: 186,
+  EQUAL: 187,
+  COMMA: 188,
+  DASH: 189,
+  PERIOD: 190,
+  SLASH: 191,
+  BACKQUOTE: 192,
+  BRACKETLEFT: 219,
+  BACKSLASH: 220,
+  BRACKETRIGHT: 221,
+  QUOTE: 222,
+  NUMPADMULTIPLY: 106,
+  NUMPADADD: 107,
+  NUMPADSUBTRACT: 109,
+  NUMPADDECIMAL: 110,
+  NUMPADDIVIDE: 111,
 };
 
-// add letters
-for (let i = 65; i <= 90; i++) {
-  keyNameToCode[String.fromCharCode(i).toUpperCase()] = i;
-}
+// Letters
+for (let i = 65; i <= 90; i++) keyNameToCode[String.fromCharCode(i)] = i;
 
-// add digits
-for (let i = 0; i <= 9; i++) {
-  keyNameToCode[i.toString()] = 48 + i;
-}
+// Digits
+for (let i = 0; i <= 9; i++) keyNameToCode[i.toString()] = 48 + i;
 
-// F1–F12
-for (let i = 1; i <= 12; i++) {
-  keyNameToCode[`F${i}`] = 111 + i;
-}
+//Function Keys
+for (let i = 1; i <= 12; i++) keyNameToCode[`F${i}`] = 111 + i;
+
+// Numpad Numbers
+for (let i = 0; i <= 9; i++) keyNameToCode[`NUMPAD${i}`] = 96 + i;
 
 export function keyNameToHex(key: string): string | null {
   const keyCode = keyNameToCode[key.toUpperCase()];
